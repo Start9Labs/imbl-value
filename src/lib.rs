@@ -1,8 +1,23 @@
 use imbl::{HashMap, Vector};
+use index::Index;
+use serde::Serialize;
 
+use std::{
+    fmt::{self, Debug, Display},
+    io,
+};
+
+pub mod in_order_map;
+pub mod index;
+pub mod macros;
+// pub mod ser;
+
+pub use in_order_map::InOMap;
 
 /// See the [`serde_json::value` module documentation](self) for usage examples.
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Clone, Eq, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(untagged)]
+
 pub enum Value {
     /// Represents a JSON null value.
     ///
@@ -29,7 +44,7 @@ pub enum Value {
     /// #
     /// let v = json!(12.5);
     /// ```
-    Number(Number),
+    Number(serde_json::Number),
 
     /// Represents a JSON string.
     ///
@@ -62,7 +77,7 @@ pub enum Value {
     /// #
     /// let v = json!({ "an": "object" });
     /// ```
-    Object(HashMap<String, Value>),
+    Object(InOMap<String, Value>),
 }
 
 impl Debug for Value {
@@ -118,8 +133,8 @@ impl Display for Value {
             fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
                 // Safety: the serializer below only emits valid utf8 when using
                 // the default formatter.
-                let s = unsafe { str::from_utf8_unchecked(buf) };
-                tri!(self.inner.write_str(s).map_err(io_error));
+                let s = unsafe { String::from_utf8_unchecked(buf.to_owned()) };
+                self.inner.write_str(&s).map_err(io_error)?;
                 Ok(buf.len())
             }
 
@@ -138,10 +153,10 @@ impl Display for Value {
         let mut wr = WriterFormatter { inner: f };
         if alternate {
             // {:#}
-            super::ser::to_writer_pretty(&mut wr, self).map_err(|_| fmt::Error)
+            serde_json::ser::to_writer_pretty(&mut wr, self).map_err(|_| fmt::Error)
         } else {
             // {}
-            super::ser::to_writer(&mut wr, self).map_err(|_| fmt::Error)
+            serde_json::ser::to_writer(&mut wr, self).map_err(|_| fmt::Error)
         }
     }
 }
@@ -253,7 +268,7 @@ impl Value {
     /// // The array `["an", "array"]` is not an object.
     /// assert_eq!(v["b"].as_object(), None);
     /// ```
-    pub fn as_object(&self) -> Option<&HashMap<String, Value>> {
+    pub fn as_object(&self) -> Option<&InOMap<String, Value>> {
         match self {
             Value::Object(map) => Some(map),
             _ => None,
@@ -271,7 +286,7 @@ impl Value {
     /// v["a"].as_object_mut().unwrap().clear();
     /// assert_eq!(v, json!({ "a": {} }));
     /// ```
-    pub fn as_object_mut(&mut self) -> Option<&mut HashMap<String, Value>> {
+    pub fn as_object_mut(&mut self) -> Option<&mut InOMap<String, Value>> {
         match self {
             Value::Object(map) => Some(map),
             _ => None,
@@ -727,7 +742,7 @@ impl Value {
     /// assert_eq!(v, json!({ "x": null }));
     /// ```
     pub fn take(&mut self) -> Value {
-        mem::replace(self, Value::Null)
+        ::std::mem::replace(self, Value::Null)
     }
 }
 
@@ -764,4 +779,62 @@ impl Default for Value {
     fn default() -> Value {
         Value::Null
     }
+}
+
+impl From<serde_json::Value> for Value {
+    fn from(value: serde_json::Value) -> Self {
+        match value {
+            serde_json::Value::Null => Value::Null,
+            serde_json::Value::Bool(a) => Value::Bool(a),
+            serde_json::Value::Number(a) => Value::Number(a),
+            serde_json::Value::String(a) => Value::String(a),
+            serde_json::Value::Array(a) => Value::Array(a.into_iter().map(Value::from).collect()),
+            serde_json::Value::Object(a) => {
+                Value::Object(a.into_iter().map(|(k, v)| (k, Value::from(v))).collect())
+            }
+        }
+    }
+}
+const NULL: Value = Value::Null;
+impl<I> ::std::ops::Index<I> for Value
+where
+    I: Index,
+{
+    type Output = Value;
+
+    fn index(&self, index: I) -> &Self::Output {
+        index.index_into(self).unwrap_or(&NULL)
+    }
+}
+pub fn to_value<T>(value: T) -> Result<Value, String>
+where
+    T: Serialize,
+{
+    value
+        .serialize(serde_json::value::Serializer)
+        .map(Value::from)
+        .map_err(|x| format!("{x:?}"))
+}
+
+#[test]
+fn test_serialize_loop() {
+    let value = json!({
+        "a": "hello I'm a",
+        "b": 1,
+        "c": true,
+        "d": null,
+        "e": [123, "testing"],
+        "f": { "h": 'i'}
+    });
+    assert_eq!(
+        &serde_json::to_string(&value)
+        .unwrap(),
+        "{\"a\":\"hello I'm a\",\"b\":1,\"c\":true,\"d\":null,\"e\":[123,\"testing\"],\"f\":{\"h\":\"i\"}}"
+    );
+    assert_eq!(
+        value,
+        serde_json::from_str(&serde_json::to_string(&value).unwrap()).unwrap(),
+    );
+
+    assert_eq!(value["f"]["h"].as_str().unwrap(), "i");
 }
