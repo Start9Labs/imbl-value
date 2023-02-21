@@ -1,7 +1,6 @@
 use std::{
     borrow::Borrow,
     fmt::{Debug, Formatter},
-    hash::Hash,
     iter::Sum,
     ops::{Add, Deref, Index, IndexMut},
 };
@@ -31,18 +30,28 @@ macro_rules! inOMap {
     }};
 }
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone)]
 pub struct InOMap<K, V>
 where
-    K: Hash + Eq + Clone,
+    K: Eq + Clone,
     V: Clone,
 {
     value: Vector<(K, V)>,
 }
 
+impl<K, V> PartialEq for InOMap<K, V>
+where
+    K: Eq + Clone,
+    V: Eq + Clone,
+{
+    fn eq(&self, other: &Self) -> bool {
+        self.value.ptr_eq(&other.value) || self.value == other.value
+    }
+}
+
 impl<K, V> Serialize for InOMap<K, V>
 where
-    K: Serialize + Hash + Eq + Clone,
+    K: Serialize + Eq + Clone,
     V: Serialize + Clone,
 {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -60,9 +69,9 @@ where
 // This is the trait that informs Serde how to deserialize MyMap.
 impl<'de, K, V> Deserialize<'de> for InOMap<K, V>
 where
-    K: Deserialize<'de> + Clone + Hash + Eq + Deref,
+    K: Deserialize<'de> + Clone + Eq + Deref,
     V: Deserialize<'de> + Clone,
-    <K as Deref>::Target: Hash + Eq,
+    <K as Deref>::Target: Eq,
 {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
@@ -76,7 +85,7 @@ where
 
 impl<K, V> InOMap<K, V>
 where
-    K: Eq + Hash + Clone,
+    K: Eq + Clone,
     V: Clone,
 {
     #[inline]
@@ -99,7 +108,7 @@ where
 }
 impl<K, V> InOMap<K, V>
 where
-    K: Eq + Hash + Clone,
+    K: Eq + Clone,
     V: Clone,
 {
     pub fn ptr_eq(&self, other: &Self) -> bool {
@@ -109,7 +118,7 @@ where
 
 impl<K, V> InOMap<K, V>
 where
-    K: Hash + Eq + Clone,
+    K: Eq + Clone,
     V: Clone,
 {
     #[inline]
@@ -137,20 +146,13 @@ where
 impl<K, V> InOMap<K, V>
 where
     V: Clone,
-    K: Hash + Eq + Clone + Deref,
-    K::Target: Hash + Eq,
+    K: Eq + Clone + Deref,
+    K::Target: Eq,
 {
-    fn test_eq(&self, other: &Self) -> bool
-    where
-        K: Hash + Eq,
-        V: PartialEq,
-    {
-        self.value == other.value
-    }
     #[must_use]
     pub fn get<BK>(&self, key: &BK) -> Option<&V>
     where
-        BK: Hash + Eq + ?Sized,
+        BK: Eq + ?Sized,
         <K as Deref>::Target: Borrow<BK> + PartialEq<BK>,
     {
         let key = key.borrow();
@@ -159,7 +161,7 @@ where
     #[must_use]
     pub fn get_key_value<BK>(&self, key: &BK) -> Option<(&K, &V)>
     where
-        BK: Hash + Eq + ?Sized,
+        BK: Eq + ?Sized,
         K: Borrow<BK> + PartialEq<BK>,
     {
         self.iter().find(|(k, _)| k == key).map(|(k, v)| (k, v))
@@ -168,7 +170,7 @@ where
     #[must_use]
     pub fn contains_key<BK>(&self, k: &BK) -> bool
     where
-        BK: Hash + Eq + ?Sized,
+        BK: Eq + ?Sized,
         <K as Deref>::Target: Borrow<BK> + PartialEq<BK>,
     {
         self.get(&k).is_some()
@@ -219,8 +221,8 @@ where
 impl<K, V> InOMap<K, V>
 where
     V: Clone,
-    K: Hash + Eq + Clone + Deref,
-    K::Target: Hash + Eq,
+    K: Eq + Clone + Deref,
+    K::Target: Eq,
 {
     /// Get a mutable iterator over the values of a hash map.
     ///
@@ -258,7 +260,7 @@ where
     #[must_use]
     pub fn get_mut<BK>(&mut self, key: &BK) -> Option<&mut V>
     where
-        BK: Hash + Eq + ?Sized,
+        BK: Eq + ?Sized,
         <K as Deref>::Target: Borrow<BK> + PartialEq<BK>,
     {
         self.value
@@ -298,7 +300,7 @@ where
             .map(|(index, _)| index)
             .map(|x| self.value.remove(x));
         self.value.push_back((key, v));
-        previous.map(|(k, v)| v)
+        previous.map(|(_, v)| v)
     }
 
     /// Remove a key/value pair from a map, if it exists, and return
@@ -324,7 +326,7 @@ where
     /// ```
     pub fn remove<BK>(&mut self, k: &BK) -> Option<V>
     where
-        BK: Hash + Eq + ?Sized,
+        BK: Eq + ?Sized,
         <K as Deref>::Target: Borrow<BK> + PartialEq<BK>,
     {
         self.value
@@ -355,7 +357,7 @@ where
     /// ```
     pub fn remove_with_key<BK>(&mut self, k: &BK) -> Option<(K, V)>
     where
-        BK: Hash + Eq + ?Sized,
+        BK: Eq + ?Sized,
         K: Borrow<BK> + PartialEq<BK>,
     {
         self.value
@@ -517,7 +519,7 @@ where
     #[must_use]
     pub fn without<BK>(&self, k: &BK) -> Self
     where
-        BK: Hash + Eq + ?Sized,
+        BK: Eq + ?Sized,
         K: Borrow<BK> + PartialEq<BK>,
     {
         match self.extract_with_key(k) {
@@ -560,7 +562,7 @@ where
     #[must_use]
     pub fn extract<BK>(&self, k: &BK) -> Option<(V, Self)>
     where
-        BK: Hash + Eq + ?Sized,
+        BK: Eq + ?Sized,
         K: Borrow<BK> + PartialEq<BK>,
     {
         self.extract_with_key(k).map(|(_, v, m)| (v, m))
@@ -573,7 +575,7 @@ where
     #[must_use]
     pub fn extract_with_key<BK>(&self, k: &BK) -> Option<(K, V, Self)>
     where
-        BK: Hash + Eq + ?Sized,
+        BK: Eq + ?Sized,
         K: Borrow<BK> + PartialEq<BK>,
     {
         let mut out = self.clone();
@@ -1044,8 +1046,8 @@ where
 pub enum Entry<'a, K, V>
 where
     V: Clone,
-    K: Hash + Eq + Clone + Deref,
-    K::Target: Hash + Eq,
+    K: Eq + Clone + Deref,
+    K::Target: Eq,
 {
     /// An entry which exists in the map.
     Occupied(OccupiedEntry<'a, K, V>),
@@ -1056,8 +1058,8 @@ where
 impl<'a, K, V> Entry<'a, K, V>
 where
     V: 'a + Clone,
-    K: 'a + Hash + Eq + Clone + Deref,
-    K::Target: 'a + Hash + Eq,
+    K: 'a + Eq + Clone + Deref,
+    K::Target: 'a + Eq,
 {
     /// Insert the default value provided if there was no value
     /// already, and return a mutable reference to the value.
@@ -1115,8 +1117,8 @@ where
 pub struct OccupiedEntry<'a, K, V>
 where
     V: Clone,
-    K: Hash + Eq + Clone + Deref,
-    K::Target: Hash + Eq,
+    K: Eq + Clone + Deref,
+    K::Target: Eq,
 {
     map: &'a mut InOMap<K, V>,
     index: usize,
@@ -1125,9 +1127,9 @@ where
 
 impl<'a, K, V> OccupiedEntry<'a, K, V>
 where
-    K: 'a + Hash + Eq + Clone + Deref,
+    K: 'a + Eq + Clone + Deref,
     V: 'a + Clone,
-    K::Target: 'a + Hash + Eq,
+    K::Target: 'a + Eq,
 {
     /// Get the key for this entry.
     #[must_use]
@@ -1177,8 +1179,8 @@ where
 pub struct VacantEntry<'a, K, V>
 where
     V: Clone,
-    K: Hash + Eq + Clone + Deref,
-    K::Target: Hash + Eq,
+    K: Eq + Clone + Deref,
+    K::Target: Eq,
 {
     map: &'a mut InOMap<K, V>,
     key: K,
@@ -1186,9 +1188,9 @@ where
 
 impl<'a, K, V> VacantEntry<'a, K, V>
 where
-    K: 'a + Hash + Eq + Clone + Deref,
+    K: 'a + Eq + Clone + Deref,
     V: 'a + Clone,
-    K::Target: 'a + Hash + Eq,
+    K::Target: 'a + Eq,
 {
     /// Get the key for this entry.
     #[must_use]
@@ -1212,8 +1214,8 @@ where
 impl<K, V> Add for InOMap<K, V>
 where
     V: Clone,
-    K: Hash + Eq + Clone + Deref,
-    K::Target: Hash + Eq,
+    K: Eq + Clone + Deref,
+    K::Target: Eq,
 {
     type Output = InOMap<K, V>;
 
@@ -1225,8 +1227,8 @@ where
 impl<'a, K, V> Add for &'a InOMap<K, V>
 where
     V: Clone,
-    K: Hash + Eq + Clone + Deref,
-    K::Target: Hash + Eq,
+    K: Eq + Clone + Deref,
+    K::Target: Eq,
 {
     type Output = InOMap<K, V>;
 
@@ -1238,8 +1240,8 @@ where
 impl<K, V> Sum for InOMap<K, V>
 where
     V: Clone,
-    K: Hash + Eq + Clone + Deref,
-    K::Target: Hash + Eq,
+    K: Eq + Clone + Deref,
+    K::Target: Eq,
 {
     fn sum<I>(it: I) -> Self
     where
@@ -1252,8 +1254,8 @@ where
 impl<K, V, RK, RV> Extend<(RK, RV)> for InOMap<K, V>
 where
     V: Clone + From<RV>,
-    K: Hash + Eq + Clone + Deref + From<RK>,
-    K::Target: Hash + Eq,
+    K: Eq + Clone + Deref + From<RK>,
+    K::Target: Eq,
 {
     fn extend<I>(&mut self, iter: I)
     where
@@ -1268,9 +1270,9 @@ where
 impl<'a, BK, K, V> Index<&'a BK> for InOMap<K, V>
 where
     V: Clone,
-    BK: Hash + Eq + ?Sized,
-    K: Hash + Eq + Clone + Deref,
-    K::Target: Hash + Eq + Borrow<BK> + PartialEq<BK>,
+    BK: Eq + ?Sized,
+    K: Eq + Clone + Deref,
+    K::Target: Eq + Borrow<BK> + PartialEq<BK>,
 {
     type Output = V;
 
@@ -1284,10 +1286,10 @@ where
 
 impl<'a, BK, K, V> IndexMut<&'a BK> for InOMap<K, V>
 where
-    BK: Hash + Eq + ?Sized,
-    K: Hash + Eq + Clone + Deref,
+    BK: Eq + ?Sized,
+    K: Eq + Clone + Deref,
     V: Clone,
-    K::Target: Hash + Eq + Borrow<BK> + PartialEq<BK>,
+    K::Target: Eq + Borrow<BK> + PartialEq<BK>,
 {
     fn index_mut(&mut self, key: &BK) -> &mut Self::Output {
         match self.get_mut::<BK>(key) {
@@ -1300,7 +1302,7 @@ where
 impl<K, V> Debug for InOMap<K, V>
 where
     V: Clone,
-    K: Hash + Eq + Debug + Clone,
+    K: Eq + Debug + Clone,
     V: Debug,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), ::std::fmt::Error> {
@@ -1352,7 +1354,7 @@ where
 
 impl<'a, K, V> IntoIterator for &'a InOMap<K, V>
 where
-    K: Hash + Eq + Clone,
+    K: Eq + Clone,
     V: Clone,
 {
     type Item = (&'a K, &'a V);
@@ -1368,7 +1370,7 @@ where
 
 impl<K, V> IntoIterator for InOMap<K, V>
 where
-    K: Hash + Eq + Clone,
+    K: Eq + Clone,
     V: Clone,
 {
     type Item = (K, V);
@@ -1385,8 +1387,8 @@ where
 impl<K, V> FromIterator<(K, V)> for InOMap<K, V>
 where
     V: Clone,
-    K: Hash + Eq + Clone + Deref,
-    K::Target: Hash + Eq,
+    K: Eq + Clone + Deref,
+    K::Target: Eq,
 {
     fn from_iter<T>(i: T) -> Self
     where
@@ -1402,7 +1404,7 @@ where
 
 impl<K, V> Default for InOMap<K, V>
 where
-    K: Hash + Clone + Eq,
+    K: Clone + Eq,
     V: Clone,
 {
     fn default() -> Self {
@@ -1414,7 +1416,7 @@ where
 
 impl<K, V> AsRef<InOMap<K, V>> for InOMap<K, V>
 where
-    K: Hash + Eq + Clone,
+    K: Eq + Clone,
     V: Clone,
 {
     #[inline]

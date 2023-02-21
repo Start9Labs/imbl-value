@@ -21,7 +21,7 @@ pub use in_order_map::InOMap;
 pub use serde_json::Error;
 
 /// See the [`serde_json::value` module documentation](self) for usage examples.
-#[derive(Clone, Eq, PartialEq, serde::Deserialize, serde::Serialize)]
+#[derive(Clone, serde::Deserialize, serde::Serialize)]
 #[serde(untagged)]
 
 pub enum Value {
@@ -788,6 +788,21 @@ impl Default for Value {
         Value::Null
     }
 }
+
+impl PartialEq for Value {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Value::Array(a), Value::Array(b)) => a.ptr_eq(b) || a == b,
+            (Value::Bool(a), Value::Bool(b)) => a == b,
+            (Value::Null, Value::Null) => true,
+            (Value::Number(a), Value::Number(b)) => a == b,
+            (Value::Object(a), Value::Object(b)) => a == b,
+            (Value::String(a), Value::String(b)) => Arc::ptr_eq(a, b),
+            _ => false,
+        }
+    }
+}
+impl Eq for Value {}
 
 impl From<serde_json::Value> for Value {
     fn from(value: serde_json::Value) -> Self {

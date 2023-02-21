@@ -1,4 +1,4 @@
-use std::{fmt, hash::Hash, marker::PhantomData, ops::Deref};
+use std::{fmt, marker::PhantomData, ops::Deref};
 
 use serde::{
     de::{MapAccess, Visitor},
@@ -9,7 +9,7 @@ use crate::InOMap;
 
 pub struct MyVisitor<K, V>
 where
-    K: Clone + Hash + Eq,
+    K: Clone + Eq,
     V: Clone,
 {
     marker: PhantomData<fn() -> InOMap<K, V>>,
@@ -17,7 +17,7 @@ where
 
 impl<K, V> MyVisitor<K, V>
 where
-    K: Clone + Hash + Eq,
+    K: Clone + Eq,
     V: Clone,
 {
     pub fn new() -> Self {
@@ -35,9 +35,9 @@ where
 // because we cannot deserialize a MyMap from an integer or string.
 impl<'de, K, V> Visitor<'de> for MyVisitor<K, V>
 where
-    K: Deserialize<'de> + Clone + Hash + Eq + Deref,
+    K: Deserialize<'de> + Clone + Eq + Deref,
     V: Deserialize<'de> + Clone,
-    <K as Deref>::Target: Hash + Eq,
+    <K as Deref>::Target: Eq,
 {
     // The type that our Visitor is going to produce.
     type Value = InOMap<K, V>;
