@@ -18,6 +18,8 @@ pub mod treediff;
 
 pub use in_order_map::InOMap;
 
+pub use serde_json::Error;
+
 /// See the [`serde_json::value` module documentation](self) for usage examples.
 #[derive(Clone, Eq, PartialEq, serde::Deserialize, serde::Serialize)]
 #[serde(untagged)]
@@ -842,21 +844,20 @@ where
         index.index_into(self).unwrap_or(&NULL)
     }
 }
-pub fn to_value<T>(value: T) -> Result<Value, String>
+pub fn to_value<T>(value: T) -> Result<Value, Error>
 where
     T: Serialize,
 {
     value
         .serialize(serde_json::value::Serializer)
         .map(Value::from)
-        .map_err(|x| format!("{x:?}"))
 }
 
-pub fn from_value<T>(value: Value) -> Result<T, String>
+pub fn from_value<T>(value: Value) -> Result<T, Error>
 where
     T: DeserializeOwned,
 {
-    serde_json::from_value(value.into()).map_err(|x| format!("{x:?}"))
+    serde_json::from_value(value.into())
 }
 
 #[test]
