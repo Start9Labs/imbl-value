@@ -325,12 +325,12 @@ where
     pub fn remove<BK>(&mut self, k: &BK) -> Option<V>
     where
         BK: Hash + Eq + ?Sized,
-        K: Borrow<BK> + PartialEq<BK>,
+        <K as Deref>::Target: Borrow<BK> + PartialEq<BK>,
     {
         self.value
             .iter()
             .enumerate()
-            .find(|x| &x.1 .0 == &*k)
+            .find(|x| x.1 .0.deref() == &*k)
             .map(|x| x.0)
             .map(|x| self.value.remove(x))
             .map(|x| x.1)

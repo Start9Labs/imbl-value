@@ -155,7 +155,7 @@ impl Mutable for ImblValue {
                 Key::String(ref k) => match { c } {
                     ImblValue::Object(ref mut obj) => {
                         if i == last_key_index {
-                            obj.remove(k);
+                            obj.remove(k.as_str());
                             return;
                         } else {
                             match obj.get_mut(k.as_str()) {
