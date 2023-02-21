@@ -1,10 +1,11 @@
-use imbl::{HashMap, Vector};
+use imbl::Vector;
 use index::Index;
 use serde::{de::DeserializeOwned, Serialize};
 
 use std::{
     fmt::{self, Debug, Display},
     io,
+    ops::Deref,
     sync::Arc,
 };
 
@@ -12,6 +13,8 @@ pub mod in_order_map;
 pub mod index;
 pub mod macros;
 // pub mod ser;
+#[cfg(feature = "treediff")]
+pub mod treediff;
 
 pub use in_order_map::InOMap;
 
@@ -673,7 +676,7 @@ impl Value {
             .map(|x| x.replace("~1", "/").replace("~0", "~"))
             .map(Arc::new)
             .try_fold(self, |target, token| match target {
-                Value::Object(map) => map.get(&token),
+                Value::Object(map) => map.get(&*token),
                 Value::Array(list) => parse_index(&token).and_then(|x| list.get(x)),
                 _ => None,
             })
@@ -727,8 +730,9 @@ impl Value {
             .split('/')
             .skip(1)
             .map(|x| x.replace("~1", "/").replace("~0", "~"))
+            .map(Arc::new)
             .try_fold(self, |target, token| match target {
-                Value::Object(map) => map.get_mut(&Arc::new(token.to_string())),
+                Value::Object(map) => map.get_mut(&*token),
                 Value::Array(list) => parse_index(&token).and_then(move |x| list.get_mut(x)),
                 _ => None,
             })
@@ -806,15 +810,19 @@ impl From<Value> for serde_json::Value {
             Value::Null => JValue::Null,
             Value::Bool(x) => JValue::Bool(x),
             Value::Number(x) => JValue::Number(x),
-            Value::String(x) => {
-                JValue::String(Arc::<String>::try_unwrap(x).unwrap_or_else(|e| e.to_string()))
-            }
+            Value::String(x) => JValue::String(match Arc::try_unwrap(x) {
+                Ok(x) => x,
+                Err(x) => x.deref().to_owned(),
+            }),
             Value::Array(x) => JValue::Array(x.into_iter().map(JValue::from).collect()),
             Value::Object(x) => JValue::Object(
                 x.into_iter()
                     .map(|(k, v)| {
                         (
-                            Arc::<String>::try_unwrap(k).unwrap_or_else(|e| e.to_string()),
+                            match Arc::try_unwrap(k) {
+                                Ok(x) => x,
+                                Err(x) => x.deref().to_owned(),
+                            },
                             JValue::from(v),
                         )
                     })

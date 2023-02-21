@@ -1,4 +1,4 @@
-use std::{fmt, hash::Hash, marker::PhantomData};
+use std::{fmt, hash::Hash, marker::PhantomData, ops::Deref};
 
 use serde::{
     de::{MapAccess, Visitor},
@@ -35,8 +35,9 @@ where
 // because we cannot deserialize a MyMap from an integer or string.
 impl<'de, K, V> Visitor<'de> for MyVisitor<K, V>
 where
-    K: Deserialize<'de> + Clone + Hash + Eq,
+    K: Deserialize<'de> + Clone + Hash + Eq + Deref,
     V: Deserialize<'de> + Clone,
+    <K as Deref>::Target: Hash + Eq,
 {
     // The type that our Visitor is going to produce.
     type Value = InOMap<K, V>;
