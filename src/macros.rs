@@ -78,7 +78,7 @@ macro_rules! json {
 
     // Insert the current entry followed by trailing comma.
     (@object $object:ident [$($key:tt)+] ($value:expr) , $($rest:tt)*) => {
-        let _ = $object.insert(($($key)+).into(), $value);
+        let _ = $object.insert(std::sync::Arc::new(($($key)+).into()), $value);
         json!(@object $object () ($($rest)*) ($($rest)*));
     };
 
@@ -89,7 +89,7 @@ macro_rules! json {
 
     // Insert the last entry without trailing comma.
     (@object $object:ident [$($key:tt)+] ($value:expr)) => {
-        let _ = $object.insert(($($key)+).into(), $value);
+        let _ = $object.insert(std::sync::Arc::new(($($key)+).into()), $value);
     };
 
     // Next value is `null`.

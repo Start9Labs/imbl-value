@@ -5,6 +5,7 @@ use serde::{de::DeserializeOwned, Serialize};
 use std::{
     fmt::{self, Debug, Display},
     io,
+    sync::Arc,
 };
 
 pub mod in_order_map;
@@ -53,7 +54,7 @@ pub enum Value {
     /// #
     /// let v = json!("a string");
     /// ```
-    String(String),
+    String(Arc<String>),
 
     /// Represents a JSON array.
     ///
@@ -77,7 +78,7 @@ pub enum Value {
     /// #
     /// let v = json!({ "an": "object" });
     /// ```
-    Object(InOMap<String, Value>),
+    Object(InOMap<Arc<String>, Value>),
 }
 
 impl Debug for Value {
@@ -268,7 +269,7 @@ impl Value {
     /// // The array `["an", "array"]` is not an object.
     /// assert_eq!(v["b"].as_object(), None);
     /// ```
-    pub fn as_object(&self) -> Option<&InOMap<String, Value>> {
+    pub fn as_object(&self) -> Option<&InOMap<Arc<String>, Value>> {
         match self {
             Value::Object(map) => Some(map),
             _ => None,
@@ -286,7 +287,7 @@ impl Value {
     /// v["a"].as_object_mut().unwrap().clear();
     /// assert_eq!(v, json!({ "a": {} }));
     /// ```
-    pub fn as_object_mut(&mut self) -> Option<&mut InOMap<String, Value>> {
+    pub fn as_object_mut(&mut self) -> Option<&mut InOMap<Arc<String>, Value>> {
         match self {
             Value::Object(map) => Some(map),
             _ => None,
@@ -670,6 +671,7 @@ impl Value {
             .split('/')
             .skip(1)
             .map(|x| x.replace("~1", "/").replace("~0", "~"))
+            .map(Arc::new)
             .try_fold(self, |target, token| match target {
                 Value::Object(map) => map.get(&token),
                 Value::Array(list) => parse_index(&token).and_then(|x| list.get(x)),
@@ -726,7 +728,7 @@ impl Value {
             .skip(1)
             .map(|x| x.replace("~1", "/").replace("~0", "~"))
             .try_fold(self, |target, token| match target {
-                Value::Object(map) => map.get_mut(&token),
+                Value::Object(map) => map.get_mut(&Arc::new(token.to_string())),
                 Value::Array(list) => parse_index(&token).and_then(move |x| list.get_mut(x)),
                 _ => None,
             })
@@ -787,11 +789,13 @@ impl From<serde_json::Value> for Value {
             serde_json::Value::Null => Value::Null,
             serde_json::Value::Bool(a) => Value::Bool(a),
             serde_json::Value::Number(a) => Value::Number(a),
-            serde_json::Value::String(a) => Value::String(a),
+            serde_json::Value::String(a) => Value::String(Arc::new(a)),
             serde_json::Value::Array(a) => Value::Array(a.into_iter().map(Value::from).collect()),
-            serde_json::Value::Object(a) => {
-                Value::Object(a.into_iter().map(|(k, v)| (k, Value::from(v))).collect())
-            }
+            serde_json::Value::Object(a) => Value::Object(
+                a.into_iter()
+                    .map(|(k, v)| (Arc::new(k), Value::from(v)))
+                    .collect(),
+            ),
         }
     }
 }
@@ -802,11 +806,20 @@ impl From<Value> for serde_json::Value {
             Value::Null => JValue::Null,
             Value::Bool(x) => JValue::Bool(x),
             Value::Number(x) => JValue::Number(x),
-            Value::String(x) => JValue::String(x),
-            Value::Array(x) => JValue::Array(x.into_iter().map(JValue::from).collect()),
-            Value::Object(x) => {
-                JValue::Object(x.into_iter().map(|(k, v)| (k, JValue::from(v))).collect())
+            Value::String(x) => {
+                JValue::String(Arc::<String>::try_unwrap(x).unwrap_or_else(|e| e.to_string()))
             }
+            Value::Array(x) => JValue::Array(x.into_iter().map(JValue::from).collect()),
+            Value::Object(x) => JValue::Object(
+                x.into_iter()
+                    .map(|(k, v)| {
+                        (
+                            Arc::<String>::try_unwrap(k).unwrap_or_else(|e| e.to_string()),
+                            JValue::from(v),
+                        )
+                    })
+                    .collect(),
+            ),
         }
     }
 }

@@ -1,4 +1,7 @@
-use std::fmt::{self, Display};
+use std::{
+    fmt::{self, Display},
+    sync::Arc,
+};
 
 use crate::{InOMap, Value};
 
@@ -66,13 +69,13 @@ impl Index for usize {
 impl Index for str {
     fn index_into<'v>(&self, v: &'v Value) -> Option<&'v Value> {
         match v {
-            Value::Object(map) => map.get(self),
+            Value::Object(map) => map.get(&Arc::new(self.to_string())),
             _ => None,
         }
     }
     fn index_into_mut<'v>(&self, v: &'v mut Value) -> Option<&'v mut Value> {
         match v {
-            Value::Object(map) => map.get_mut(self),
+            Value::Object(map) => map.get_mut(&Arc::new(self.to_string())),
             _ => None,
         }
     }
@@ -81,7 +84,7 @@ impl Index for str {
             *v = Value::Object(InOMap::new());
         }
         match v {
-            Value::Object(map) => map.entry(self.to_owned()).or_insert(Value::Null),
+            Value::Object(map) => map.entry(Arc::new(self.to_string())).or_insert(Value::Null),
             _ => panic!("cannot access key {:?} in JSON {}", self, Type(v)),
         }
     }
