@@ -242,7 +242,8 @@ where
     /// ```
     /// # #[macro_use] extern crate imbl;
     /// # use imbl_value::InOMap;
-    /// let mut map = InOMap!{123 => "lol"};
+    /// # use imbl_value::inOMap;
+    /// let mut map = inOMap!{123 => "lol"};
     /// if let Some(value) = map.get_mut(&123) {
     ///     *value = "omg";
     /// }
@@ -275,12 +276,13 @@ where
     /// ```
     /// # #[macro_use] extern crate imbl;
     /// # use imbl_value::InOMap;
-    /// let mut map = InOMap!{};
+    /// # use imbl_value::inOMap;
+    /// let mut map = inOMap!{};
     /// map.insert(123, "123");
     /// map.insert(456, "456");
     /// assert_eq!(
     ///   map,
-    ///   InOMap!{123 => "123", 456 => "456"}
+    ///   inOMap!{123 => "123", 456 => "456"}
     /// );
     /// ```
     #[inline]
@@ -310,7 +312,8 @@ where
     /// ```
     /// # #[macro_use] extern crate imbl;
     /// # use imbl_value::InOMap;
-    /// let mut map = InOMap!{123 => "123", 456 => "456"};
+    /// # use imbl_value::inOMap;
+    /// let mut map = inOMap!{123 => "123", 456 => "456"};
     /// assert_eq!(Some("123"), map.remove(&123));
     /// assert_eq!(Some("456"), map.remove(&456));
     /// assert_eq!(None, map.remove(&789));
@@ -340,7 +343,8 @@ where
     /// ```
     /// # #[macro_use] extern crate imbl;
     /// # use imbl_value::InOMap;
-    /// let mut map = InOMap!{123 => "123", 456 => "456"};
+    /// # use imbl_value::inOMap;
+    /// let mut map = inOMap!{123 => "123", 456 => "456"};
     /// assert_eq!(Some((123, "123")), map.remove_with_key(&123));
     /// assert_eq!(Some((456, "456")), map.remove_with_key(&456));
     /// assert_eq!(None, map.remove_with_key(&789));
@@ -396,10 +400,11 @@ where
     /// ```
     /// # #[macro_use] extern crate imbl;
     /// # use imbl_value::InOMap;
-    /// let map = InOMap!{};
+    /// # use imbl_value::inOMap;
+    /// let map = inOMap!{};
     /// assert_eq!(
     ///   map.update(123, "123"),
-    ///   InOMap!{123 => "123"}
+    ///   inOMap!{123 => "123"}
     /// );
     /// ```
     #[inline]
@@ -532,9 +537,9 @@ where
     /// ```
     /// # #[macro_use] extern crate imbl;
     /// # use imbl_value;
-    /// let mut map = InOMap!{1 => 1, 2 => 2, 3 => 3};
+    /// let mut map = inOMap!{1 => 1, 2 => 2, 3 => 3};
     /// map.retain(|k, v| *k > 1);
-    /// let expected = InOMap!{2 => 2, 3 => 3};
+    /// let expected = inOMap!{2 => 2, 3 => 3};
     /// assert_eq!(expected, map);
     /// ```
     pub fn retain<F>(&mut self, mut f: F)
@@ -581,9 +586,10 @@ where
     /// ```
     /// # #[macro_use] extern crate imbl;
     /// # use imbl_value::InOMap;
-    /// let map1 = InOMap!{1 => 1, 3 => 3};
-    /// let map2 = InOMap!{2 => 2, 3 => 4};
-    /// let expected = InOMap!{1 => 1, 2 => 2, 3 => 3};
+    /// # use imbl_value::inOMap;
+    /// let map1 = inOMap!{1 => 1, 3 => 3};
+    /// let map2 = inOMap!{2 => 2, 3 => 4};
+    /// let expected = inOMap!{1 => 1, 2 => 2, 3 => 3};
     /// assert_eq!(expected, map1.union(map2));
     /// ```
     #[must_use]
@@ -641,9 +647,10 @@ where
     /// ```
     /// # #[macro_use] extern crate imbl;
     /// # use imbl_value::InOMap;
-    /// let map1 = InOMap!{1 => 1, 3 => 4};
-    /// let map2 = InOMap!{2 => 2, 3 => 5};
-    /// let expected = InOMap!{1 => 1, 2 => 2, 3 => 9};
+    /// # use imbl_value::inOMap;
+    /// let map1 = inOMap!{1 => 1, 3 => 4};
+    /// let map2 = inOMap!{2 => 2, 3 => 5};
+    /// let expected = inOMap!{1 => 1, 2 => 2, 3 => 9};
     /// assert_eq!(expected, map1.union_with_key(
     ///     map2,
     ///     |key, left, right| left + right
@@ -691,9 +698,10 @@ where
     /// ```
     /// # #[macro_use] extern crate imbl;
     /// # use imbl_value::InOMap;
-    /// let map1 = InOMap!{1 => 1, 3 => 3};
-    /// let map2 = InOMap!{2 => 2};
-    /// let expected = InOMap!{1 => 1, 2 => 2, 3 => 3};
+    /// # use imbl_value::inOMap;
+    /// let map1 = inOMap!{1 => 1, 3 => 3};
+    /// let map2 = inOMap!{2 => 2};
+    /// let expected = inOMap!{1 => 1, 2 => 2, 3 => 3};
     /// assert_eq!(expected, InOMap::unions(vec![map1, map2]));
     /// ```
     #[must_use]
@@ -758,9 +766,10 @@ where
     /// ```
     /// # #[macro_use] extern crate imbl;
     /// # use imbl_value::InOMap;
-    /// let map1 = InOMap!{1 => 1, 3 => 4};
-    /// let map2 = InOMap!{2 => 2, 3 => 5};
-    /// let expected = InOMap!{1 => 1, 2 => 2};
+    /// # use imbl_value::inOMap;
+    /// let map1 = inOMap!{1 => 1, 3 => 4};
+    /// let map2 = inOMap!{2 => 2, 3 => 5};
+    /// let expected = inOMap!{1 => 1, 2 => 2};
     /// assert_eq!(expected, map1.difference(map2));
     /// ```
     ///
@@ -785,9 +794,10 @@ where
     /// ```
     /// # #[macro_use] extern crate imbl;
     /// # use imbl_value::InOMap;
-    /// let map1 = InOMap!{1 => 1, 3 => 4};
-    /// let map2 = InOMap!{2 => 2, 3 => 5};
-    /// let expected = InOMap!{1 => 1, 2 => 2};
+    /// # use imbl_value::inOMap;
+    /// let map1 = inOMap!{1 => 1, 3 => 4};
+    /// let map2 = inOMap!{2 => 2, 3 => 5};
+    /// let expected = inOMap!{1 => 1, 2 => 2};
     /// assert_eq!(expected, map1.symmetric_difference(map2));
     /// ```
     #[inline]
@@ -846,9 +856,10 @@ where
     /// ```
     /// # #[macro_use] extern crate imbl;
     /// # use imbl_value::InOMap;
-    /// let map1 = InOMap!{1 => 1, 3 => 4};
-    /// let map2 = InOMap!{2 => 2, 3 => 5};
-    /// let expected = InOMap!{1 => 1, 2 => 2, 3 => 9};
+    /// # use imbl_value::inOMap;
+    /// let map1 = inOMap!{1 => 1, 3 => 4};
+    /// let map2 = inOMap!{2 => 2, 3 => 5};
+    /// let expected = inOMap!{1 => 1, 2 => 2, 3 => 9};
     /// assert_eq!(expected, map1.difference_with_key(
     ///     map2,
     ///     |key, left, right| Some(left + right)
@@ -879,9 +890,10 @@ where
     /// ```
     /// # #[macro_use] extern crate imbl;
     /// # use imbl_value::InOMap;
-    /// let map1 = InOMap!{1 => 1, 3 => 4};
-    /// let map2 = InOMap!{2 => 2, 3 => 5};
-    /// let expected = InOMap!{1 => 1, 2 => 2, 3 => 9};
+    /// # use imbl_value::inOMap;
+    /// let map1 = inOMap!{1 => 1, 3 => 4};
+    /// let map2 = inOMap!{2 => 2, 3 => 5};
+    /// let expected = inOMap!{1 => 1, 2 => 2, 3 => 9};
     /// assert_eq!(expected, map1.symmetric_difference_with_key(
     ///     map2,
     ///     |key, left, right| Some(left + right)
@@ -942,9 +954,10 @@ where
     /// ```
     /// # #[macro_use] extern crate imbl;
     /// # use imbl_value::InOMap;
-    /// let map1 = InOMap!{1 => 1, 2 => 2};
-    /// let map2 = InOMap!{2 => 3, 3 => 4};
-    /// let expected = InOMap!{2 => 2};
+    /// # use imbl_value::inOMap;
+    /// let map1 = inOMap!{1 => 1, 2 => 2};
+    /// let map2 = inOMap!{2 => 3, 3 => 4};
+    /// let expected = inOMap!{2 => 2};
     /// assert_eq!(expected, map1.intersection(map2));
     /// ```
     #[inline]
@@ -980,9 +993,10 @@ where
     /// ```
     /// # #[macro_use] extern crate imbl;
     /// # use imbl_value::InOMap;
-    /// let map1 = InOMap!{1 => 1, 2 => 2};
-    /// let map2 = InOMap!{2 => 3, 3 => 4};
-    /// let expected = InOMap!{2 => 5};
+    /// # use imbl_value::inOMap;
+    /// let map1 = inOMap!{1 => 1, 2 => 2};
+    /// let map2 = inOMap!{2 => 3, 3 => 4};
+    /// let expected = inOMap!{2 => 5};
     /// assert_eq!(expected, map1.intersection_with_key(
     ///     map2,
     ///     |key, left, right| left + right

@@ -1,6 +1,6 @@
 use imbl::{HashMap, Vector};
 use index::Index;
-use serde::Serialize;
+use serde::{de::DeserializeOwned, Serialize};
 
 use std::{
     fmt::{self, Debug, Display},
@@ -795,6 +795,21 @@ impl From<serde_json::Value> for Value {
         }
     }
 }
+impl From<Value> for serde_json::Value {
+    fn from(value: Value) -> Self {
+        use serde_json::Value as JValue;
+        match value {
+            Value::Null => JValue::Null,
+            Value::Bool(x) => JValue::Bool(x),
+            Value::Number(x) => JValue::Number(x),
+            Value::String(x) => JValue::String(x),
+            Value::Array(x) => JValue::Array(x.into_iter().map(JValue::from).collect()),
+            Value::Object(x) => {
+                JValue::Object(x.into_iter().map(|(k, v)| (k, JValue::from(v))).collect())
+            }
+        }
+    }
+}
 const NULL: Value = Value::Null;
 impl<I> ::std::ops::Index<I> for Value
 where
@@ -814,6 +829,13 @@ where
         .serialize(serde_json::value::Serializer)
         .map(Value::from)
         .map_err(|x| format!("{x:?}"))
+}
+
+pub fn from_value<T>(value: Value) -> Result<T, String>
+where
+    T: DeserializeOwned,
+{
+    serde_json::from_value(value.into()).map_err(|x| format!("{x:?}"))
 }
 
 #[test]
