@@ -537,6 +537,7 @@ where
     /// ```
     /// # #[macro_use] extern crate imbl;
     /// # use imbl_value;
+    /// # use imbl_value::inOMap;
     /// let mut map = inOMap!{1 => 1, 2 => 2, 3 => 3};
     /// map.retain(|k, v| *k > 1);
     /// let expected = inOMap!{2 => 2, 3 => 3};
@@ -589,7 +590,7 @@ where
     /// # use imbl_value::inOMap;
     /// let map1 = inOMap!{1 => 1, 3 => 3};
     /// let map2 = inOMap!{2 => 2, 3 => 4};
-    /// let expected = inOMap!{1 => 1, 2 => 2, 3 => 3};
+    /// let expected = inOMap!{ 2 => 2, 3 => 3, 1 => 1,};
     /// assert_eq!(expected, map1.union(map2));
     /// ```
     #[must_use]
@@ -599,7 +600,7 @@ where
         } else {
             (other, self, true)
         };
-        for (k, v) in to_consume.value.into_iter() {
+        for (k, v) in to_consume.value.into_iter().rev() {
             match to_mutate.entry(k) {
                 Entry::Occupied(mut e) if use_to_consume => {
                     e.insert(v);
@@ -610,6 +611,7 @@ where
                 _ => {}
             }
         }
+        to_mutate.value = to_mutate.value.clone().into_iter().rev().collect();
         to_mutate
     }
 
@@ -701,7 +703,7 @@ where
     /// # use imbl_value::inOMap;
     /// let map1 = inOMap!{1 => 1, 3 => 3};
     /// let map2 = inOMap!{2 => 2};
-    /// let expected = inOMap!{1 => 1, 2 => 2, 3 => 3};
+    /// let expected = inOMap!{2 => 2, 1 => 1, 3 => 3};
     /// assert_eq!(expected, InOMap::unions(vec![map1, map2]));
     /// ```
     #[must_use]
@@ -859,7 +861,7 @@ where
     /// # use imbl_value::inOMap;
     /// let map1 = inOMap!{1 => 1, 3 => 4};
     /// let map2 = inOMap!{2 => 2, 3 => 5};
-    /// let expected = inOMap!{1 => 1, 2 => 2, 3 => 9};
+    /// let expected = inOMap!{1 => 1, 3 => 9,  2 => 2,};
     /// assert_eq!(expected, map1.difference_with_key(
     ///     map2,
     ///     |key, left, right| Some(left + right)
@@ -893,7 +895,7 @@ where
     /// # use imbl_value::inOMap;
     /// let map1 = inOMap!{1 => 1, 3 => 4};
     /// let map2 = inOMap!{2 => 2, 3 => 5};
-    /// let expected = inOMap!{1 => 1, 2 => 2, 3 => 9};
+    /// let expected = inOMap!{1 => 1, 3 => 9,  2 => 2,};
     /// assert_eq!(expected, map1.symmetric_difference_with_key(
     ///     map2,
     ///     |key, left, right| Some(left + right)
