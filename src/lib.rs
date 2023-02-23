@@ -858,7 +858,7 @@ where
         index.index_into(self).unwrap_or(&NULL)
     }
 }
-pub fn to_value<T>(value: T) -> Result<Value, Error>
+pub fn to_value<T>(value: &T) -> Result<Value, Error>
 where
     T: Serialize,
 {

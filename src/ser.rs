@@ -196,7 +196,7 @@ impl serde::Serializer for Serializer {
         T: ?Sized + Serialize,
     {
         let mut values = Map::new();
-        values.insert(Arc::new(String::from(variant)), to_value(value)?);
+        values.insert(Arc::new(String::from(variant)), to_value(&value)?);
         Ok(Value::Object(values))
     }
 
@@ -305,7 +305,7 @@ impl serde::ser::SerializeSeq for SerializeVec {
     where
         T: ?Sized + Serialize,
     {
-        self.vec.push_back(to_value(value)?);
+        self.vec.push_back(to_value(&value)?);
         Ok(())
     }
 
@@ -354,7 +354,7 @@ impl serde::ser::SerializeTupleVariant for SerializeTupleVariant {
     where
         T: ?Sized + Serialize,
     {
-        self.vec.push_back(to_value(value)?);
+        self.vec.push_back(to_value(&value)?);
         Ok(())
     }
 
@@ -393,7 +393,7 @@ impl serde::ser::SerializeMap for SerializeMap {
                 // Panic because this indicates a bug in the program rather than an
                 // expected failure.
                 let key = key.expect("serialize_value called before serialize_key");
-                map.insert(Arc::new(key), to_value(value)?);
+                map.insert(Arc::new(key), to_value(&value)?);
                 Ok(())
             }
         }
@@ -617,7 +617,7 @@ impl serde::ser::SerializeStructVariant for SerializeStructVariant {
         T: ?Sized + Serialize,
     {
         self.map
-            .insert(Arc::new(String::from(key)), to_value(value)?);
+            .insert(Arc::new(String::from(key)), to_value(&value)?);
         Ok(())
     }
 
