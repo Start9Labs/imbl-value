@@ -1351,6 +1351,12 @@ where
         self.it.size_hint()
     }
 }
+impl<'a, K, V> ExactSizeIterator for Iter<'a, K, V>
+where
+    K: Clone,
+    V: Clone,
+{
+}
 
 impl<'a, K, V> IntoIterator for &'a InOMap<K, V>
 where

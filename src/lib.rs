@@ -5,13 +5,14 @@ use serde::{de::DeserializeOwned, Serialize};
 use std::{
     fmt::{self, Debug, Display},
     io,
-    ops::Deref,
     sync::Arc,
 };
 
+pub mod de;
 pub mod in_order_map;
 pub mod index;
 pub mod macros;
+pub mod ser;
 // pub mod ser;
 #[cfg(feature = "treediff")]
 pub mod treediff;
@@ -21,9 +22,7 @@ pub use in_order_map::InOMap;
 pub use serde_json::Error;
 
 /// See the [`serde_json::value` module documentation](self) for usage examples.
-#[derive(Clone, serde::Deserialize, serde::Serialize)]
-#[serde(untagged)]
-
+#[derive(Clone)]
 pub enum Value {
     /// Represents a JSON null value.
     ///
@@ -804,50 +803,50 @@ impl PartialEq for Value {
 }
 impl Eq for Value {}
 
-impl From<serde_json::Value> for Value {
-    fn from(value: serde_json::Value) -> Self {
-        match value {
-            serde_json::Value::Null => Value::Null,
-            serde_json::Value::Bool(a) => Value::Bool(a),
-            serde_json::Value::Number(a) => Value::Number(a),
-            serde_json::Value::String(a) => Value::String(Arc::new(a)),
-            serde_json::Value::Array(a) => Value::Array(a.into_iter().map(Value::from).collect()),
-            serde_json::Value::Object(a) => Value::Object(
-                a.into_iter()
-                    .map(|(k, v)| (Arc::new(k), Value::from(v)))
-                    .collect(),
-            ),
-        }
-    }
-}
-impl From<Value> for serde_json::Value {
-    fn from(value: Value) -> Self {
-        use serde_json::Value as JValue;
-        match value {
-            Value::Null => JValue::Null,
-            Value::Bool(x) => JValue::Bool(x),
-            Value::Number(x) => JValue::Number(x),
-            Value::String(x) => JValue::String(match Arc::try_unwrap(x) {
-                Ok(x) => x,
-                Err(x) => x.deref().to_owned(),
-            }),
-            Value::Array(x) => JValue::Array(x.into_iter().map(JValue::from).collect()),
-            Value::Object(x) => JValue::Object(
-                x.into_iter()
-                    .map(|(k, v)| {
-                        (
-                            match Arc::try_unwrap(k) {
-                                Ok(x) => x,
-                                Err(x) => x.deref().to_owned(),
-                            },
-                            JValue::from(v),
-                        )
-                    })
-                    .collect(),
-            ),
-        }
-    }
-}
+// impl From<serde_json::Value> for Value {
+//     fn from(value: serde_json::Value) -> Self {
+//         match value {
+//             serde_json::Value::Null => Value::Null,
+//             serde_json::Value::Bool(a) => Value::Bool(a),
+//             serde_json::Value::Number(a) => Value::Number(a),
+//             serde_json::Value::String(a) => Value::String(Arc::new(a)),
+//             serde_json::Value::Array(a) => Value::Array(a.into_iter().map(Value::from).collect()),
+//             serde_json::Value::Object(a) => Value::Object(
+//                 a.into_iter()
+//                     .map(|(k, v)| (Arc::new(k), Value::from(v)))
+//                     .collect(),
+//             ),
+//         }
+//     }
+// }
+// impl From<Value> for serde_json::Value {
+//     fn from(value: Value) -> Self {
+//         use serde_json::Value as JValue;
+//         match value {
+//             Value::Null => JValue::Null,
+//             Value::Bool(x) => JValue::Bool(x),
+//             Value::Number(x) => JValue::Number(x),
+//             Value::String(x) => JValue::String(match Arc::try_unwrap(x) {
+//                 Ok(x) => x,
+//                 Err(x) => x.deref().to_owned(),
+//             }),
+//             Value::Array(x) => JValue::Array(x.into_iter().map(JValue::from).collect()),
+//             Value::Object(x) => JValue::Object(
+//                 x.into_iter()
+//                     .map(|(k, v)| {
+//                         (
+//                             match Arc::try_unwrap(k) {
+//                                 Ok(x) => x,
+//                                 Err(x) => x.deref().to_owned(),
+//                             },
+//                             JValue::from(v),
+//                         )
+//                     })
+//                     .collect(),
+//             ),
+//         }
+//     }
+// }
 const NULL: Value = Value::Null;
 impl<I> ::std::ops::Index<I> for Value
 where
@@ -863,16 +862,14 @@ pub fn to_value<T>(value: T) -> Result<Value, Error>
 where
     T: Serialize,
 {
-    value
-        .serialize(serde_json::value::Serializer)
-        .map(Value::from)
+    value.serialize(ser::Serializer)
 }
 
 pub fn from_value<T>(value: Value) -> Result<T, Error>
 where
     T: DeserializeOwned,
 {
-    serde_json::from_value(value.into())
+    T::deserialize(value)
 }
 
 #[test]
