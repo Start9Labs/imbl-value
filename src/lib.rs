@@ -850,17 +850,7 @@ impl Eq for Value {}
 //         }
 //     }
 // }
-const NULL: Value = Value::Null;
-impl<I> ::std::ops::Index<I> for Value
-where
-    I: Index,
-{
-    type Output = Value;
 
-    fn index(&self, index: I) -> &Self::Output {
-        index.index_into(self).unwrap_or(&NULL)
-    }
-}
 pub fn to_value<T>(value: &T) -> Result<Value, Error>
 where
     T: Serialize,

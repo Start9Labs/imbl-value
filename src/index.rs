@@ -117,3 +117,85 @@ where
         (**self).index_or_insert(v)
     }
 }
+
+impl<I> std::ops::Index<I> for Value
+where
+    I: Index,
+{
+    type Output = Value;
+
+    /// Index into a `serde_json::Value` using the syntax `value[0]` or
+    /// `value["k"]`.
+    ///
+    /// Returns `Value::Null` if the type of `self` does not match the type of
+    /// the index, for example if the index is a string and `self` is an array
+    /// or a number. Also returns `Value::Null` if the given key does not exist
+    /// in the map or the given index is not within the bounds of the array.
+    ///
+    /// For retrieving deeply nested values, you should have a look at the
+    /// `Value::pointer` method.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use serde_json::json;
+    /// #
+    /// let data = json!({
+    ///     "x": {
+    ///         "y": ["z", "zz"]
+    ///     }
+    /// });
+    ///
+    /// assert_eq!(data["x"]["y"], json!(["z", "zz"]));
+    /// assert_eq!(data["x"]["y"][0], json!("z"));
+    ///
+    /// assert_eq!(data["a"], json!(null)); // returns null for undefined values
+    /// assert_eq!(data["a"]["b"], json!(null)); // does not panic
+    /// ```
+    fn index(&self, index: I) -> &Value {
+        static NULL: Value = Value::Null;
+        index.index_into(self).unwrap_or(&NULL)
+    }
+}
+
+impl<I> std::ops::IndexMut<I> for Value
+where
+    I: Index,
+{
+    /// Write into a `serde_json::Value` using the syntax `value[0] = ...` or
+    /// `value["k"] = ...`.
+    ///
+    /// If the index is a number, the value must be an array of length bigger
+    /// than the index. Indexing into a value that is not an array or an array
+    /// that is too small will panic.
+    ///
+    /// If the index is a string, the value must be an object or null which is
+    /// treated like an empty object. If the key is not already present in the
+    /// object, it will be inserted with a value of null. Indexing into a value
+    /// that is neither an object nor null will panic.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use serde_json::json;
+    /// #
+    /// let mut data = json!({ "x": 0 });
+    ///
+    /// // replace an existing key
+    /// data["x"] = json!(1);
+    ///
+    /// // insert a new key
+    /// data["y"] = json!([false, false, false]);
+    ///
+    /// // replace an array value
+    /// data["y"][0] = json!(true);
+    ///
+    /// // inserted a deeply nested key
+    /// data["a"]["b"]["c"]["d"] = json!(true);
+    ///
+    /// println!("{}", data);
+    /// ```
+    fn index_mut(&mut self, index: I) -> &mut Value {
+        index.index_or_insert(self)
+    }
+}
