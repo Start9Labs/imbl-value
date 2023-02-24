@@ -8,10 +8,11 @@ use serde::de::{
 use serde::forward_to_deserialize_any;
 use serde_json::Error;
 use serde_json::Number;
+use std::ops::Deref;
 use std::sync::Arc;
 
-use crate::InOMap as Map;
 use crate::Value;
+use crate::{InOMap as Map, InternedString};
 
 impl<'de> Deserialize<'de> for Value {
     #[inline]
@@ -156,7 +157,7 @@ where
     }
 }
 
-fn visit_object<'de, V>(object: Map<Arc<String>, Value>, visitor: V) -> Result<V::Value, Error>
+fn visit_object<'de, V>(object: Map<InternedString, Value>, visitor: V) -> Result<V::Value, Error>
 where
     V: Visitor<'de>,
 {
@@ -250,7 +251,23 @@ impl<'de> serde::Deserializer<'de> for Value {
                 }
                 (variant, Some(value))
             }
-            Value::String(variant) => (variant, None),
+            Value::String(variant) => (
+                InternedString::intern({
+                    struct ArcStr(Arc<String>);
+                    impl fmt::Display for ArcStr {
+                        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                            fmt::Display::fmt(&self.0, f)
+                        }
+                    }
+                    impl From<ArcStr> for String {
+                        fn from(value: ArcStr) -> Self {
+                            Arc::try_unwrap(value.0).unwrap_or_else(|v| v.deref().to_owned())
+                        }
+                    }
+                    ArcStr(variant)
+                }),
+                None,
+            ),
             other => {
                 return Err(serde::de::Error::invalid_type(
                     other.unexpected(),
@@ -422,7 +439,7 @@ impl<'de> serde::Deserializer<'de> for Value {
 }
 
 struct EnumDeserializer {
-    variant: Arc<String>,
+    variant: InternedString,
     value: Option<Value>,
 }
 
@@ -434,7 +451,7 @@ impl<'de> EnumAccess<'de> for EnumDeserializer {
     where
         V: DeserializeSeed<'de>,
     {
-        let variant = ArcStringDeserializer::new(self.variant);
+        let variant = self.variant.into_deserializer();
         let visitor = VariantDeserializer { value: self.value };
         seed.deserialize(variant).map(|v| (v, visitor))
     }
@@ -554,12 +571,12 @@ impl<'de> SeqAccess<'de> for SeqDeserializer {
 }
 
 struct MapDeserializer {
-    iter: <Map<Arc<String>, Value> as IntoIterator>::IntoIter,
+    iter: <Map<InternedString, Value> as IntoIterator>::IntoIter,
     value: Option<Value>,
 }
 
 impl MapDeserializer {
-    fn new(map: Map<Arc<String>, Value>) -> Self {
+    fn new(map: Map<InternedString, Value>) -> Self {
         MapDeserializer {
             iter: map.into_iter(),
             value: None,
@@ -635,7 +652,7 @@ where
 }
 
 fn visit_object_ref<'de, V>(
-    object: &'de Map<Arc<String>, Value>,
+    object: &'de Map<InternedString, Value>,
     visitor: V,
 ) -> Result<V::Value, Error>
 where
@@ -723,9 +740,9 @@ impl<'de> serde::Deserializer<'de> for &'de Value {
                         &"map with a single key",
                     ));
                 }
-                (variant, Some(value))
+                (&**variant, Some(value))
             }
-            Value::String(variant) => (variant, None),
+            Value::String(variant) => (&***variant, None),
             other => {
                 return Err(serde::de::Error::invalid_type(
                     other.unexpected(),
@@ -1012,12 +1029,12 @@ impl<'de> SeqAccess<'de> for SeqRefDeserializer<'de> {
 }
 
 struct MapRefDeserializer<'de> {
-    iter: <&'de Map<Arc<String>, Value> as IntoIterator>::IntoIter,
+    iter: <&'de Map<InternedString, Value> as IntoIterator>::IntoIter,
     value: Option<&'de Value>,
 }
 
 impl<'de> MapRefDeserializer<'de> {
-    fn new(map: &'de Map<Arc<String>, Value>) -> Self {
+    fn new(map: &'de Map<InternedString, Value>) -> Self {
         MapRefDeserializer {
             iter: map.into_iter(),
             value: None,
@@ -1061,7 +1078,7 @@ impl<'de> MapAccess<'de> for MapRefDeserializer<'de> {
 }
 
 struct MapKeyDeserializer {
-    key: Arc<String>,
+    key: InternedString,
 }
 
 macro_rules! deserialize_integer_key {
@@ -1070,10 +1087,9 @@ macro_rules! deserialize_integer_key {
         where
             V: Visitor<'de>,
         {
-            match (self.key.parse(), Arc::try_unwrap(self.key)) {
-                (Ok(integer), _) => visitor.$visit(integer),
-                (Err(_), Err(s)) => visitor.visit_str(s.as_str()),
-                (Err(_), Ok(s)) => visitor.visit_string(s),
+            match self.key.parse() {
+                Ok(integer) => visitor.$visit(integer),
+                Err(_) => visitor.visit_str(&*self.key),
             }
         }
     };
@@ -1086,7 +1102,7 @@ impl<'de> serde::Deserializer<'de> for MapKeyDeserializer {
     where
         V: Visitor<'de>,
     {
-        ArcStringDeserializer::new(self.key).deserialize_any(visitor)
+        InternedStringDeserializer::new(self.key).deserialize_any(visitor)
     }
 
     deserialize_integer_key!(deserialize_i8 => visit_i8);
@@ -1130,7 +1146,7 @@ impl<'de> serde::Deserializer<'de> for MapKeyDeserializer {
     where
         V: Visitor<'de>,
     {
-        ArcStringDeserializer::new(self.key).deserialize_enum(name, variants, visitor)
+        InternedStringDeserializer::new(self.key).deserialize_enum(name, variants, visitor)
     }
 
     forward_to_deserialize_any! {
@@ -1142,7 +1158,7 @@ impl<'de> serde::Deserializer<'de> for MapKeyDeserializer {
 struct KeyClassifier;
 
 enum KeyClass {
-    Map(Arc<String>),
+    Map(InternedString),
 }
 
 impl<'de> DeserializeSeed<'de> for KeyClassifier {
@@ -1168,7 +1184,7 @@ impl<'de> Visitor<'de> for KeyClassifier {
         E: de::Error,
     {
         match s {
-            _ => Ok(KeyClass::Map(Arc::new(s.to_owned()))),
+            _ => Ok(KeyClass::Map(InternedString::intern(s))),
         }
     }
 
@@ -1177,7 +1193,7 @@ impl<'de> Visitor<'de> for KeyClassifier {
         E: de::Error,
     {
         match s.as_str() {
-            _ => Ok(KeyClass::Map(Arc::new(s))),
+            _ => Ok(KeyClass::Map(InternedString::intern(s))),
         }
     }
 }
@@ -1214,27 +1230,24 @@ impl Value {
     }
 }
 
-struct ArcStringDeserializer {
-    value: Arc<String>,
+struct InternedStringDeserializer {
+    value: InternedString,
 }
 
-impl ArcStringDeserializer {
-    fn new(value: Arc<String>) -> Self {
-        ArcStringDeserializer { value }
+impl InternedStringDeserializer {
+    fn new(value: InternedString) -> Self {
+        InternedStringDeserializer { value }
     }
 }
 
-impl<'de> de::Deserializer<'de> for ArcStringDeserializer {
+impl<'de> de::Deserializer<'de> for InternedStringDeserializer {
     type Error = Error;
 
     fn deserialize_any<V>(self, visitor: V) -> Result<V::Value, Error>
     where
         V: de::Visitor<'de>,
     {
-        match Arc::try_unwrap(self.value) {
-            Err(s) => visitor.visit_str(s.as_str()),
-            Ok(string) => visitor.visit_string(string),
-        }
+        visitor.visit_str(&*self.value)
     }
 
     fn deserialize_enum<V>(
@@ -1256,7 +1269,7 @@ impl<'de> de::Deserializer<'de> for ArcStringDeserializer {
     }
 }
 
-impl<'de> de::EnumAccess<'de> for ArcStringDeserializer {
+impl<'de> de::EnumAccess<'de> for InternedStringDeserializer {
     type Error = Error;
     type Variant = UnitOnly;
 

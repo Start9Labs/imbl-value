@@ -10,3 +10,4 @@ imbl = { version = "2.*", features = ["serde", "small-chunks"] }
 serde_json = "1.*"
 serde = { version = "1.*", features = ["derive", "rc"] }
 treediff = { version = "4.*", optional = true }
+yasi = "0.1"

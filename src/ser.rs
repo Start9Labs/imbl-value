@@ -8,6 +8,7 @@ use std::sync::Arc;
 
 use crate::to_value;
 use crate::InOMap as Map;
+use crate::InternedString;
 use crate::Value;
 
 impl Serialize for Value {
@@ -196,7 +197,7 @@ impl serde::Serializer for Serializer {
         T: ?Sized + Serialize,
     {
         let mut values = Map::new();
-        values.insert(Arc::new(String::from(variant)), to_value(&value)?);
+        values.insert(InternedString::intern(variant), to_value(&value)?);
         Ok(Value::Object(values))
     }
 
@@ -237,7 +238,7 @@ impl serde::Serializer for Serializer {
         _len: usize,
     ) -> Result<Self::SerializeTupleVariant> {
         Ok(SerializeTupleVariant {
-            name: Arc::new(String::from(variant)),
+            name: InternedString::intern(variant),
             vec: Vector::new(),
         })
     }
@@ -263,7 +264,7 @@ impl serde::Serializer for Serializer {
         _len: usize,
     ) -> Result<Self::SerializeStructVariant> {
         Ok(SerializeStructVariant {
-            name: Arc::new(String::from(variant)),
+            name: InternedString::intern(variant),
             map: Map::new(),
         })
     }
@@ -281,20 +282,20 @@ pub struct SerializeVec {
 }
 
 pub struct SerializeTupleVariant {
-    name: Arc<String>,
+    name: InternedString,
     vec: Vector<Value>,
 }
 
 pub enum SerializeMap {
     Map {
-        map: Map<Arc<String>, Value>,
-        next_key: Option<String>,
+        map: Map<InternedString, Value>,
+        next_key: Option<InternedString>,
     },
 }
 
 pub struct SerializeStructVariant {
-    name: Arc<String>,
-    map: Map<Arc<String>, Value>,
+    name: InternedString,
+    map: Map<InternedString, Value>,
 }
 
 impl serde::ser::SerializeSeq for SerializeVec {
@@ -393,7 +394,7 @@ impl serde::ser::SerializeMap for SerializeMap {
                 // Panic because this indicates a bug in the program rather than an
                 // expected failure.
                 let key = key.expect("serialize_value called before serialize_key");
-                map.insert(Arc::new(key), to_value(&value)?);
+                map.insert(key, to_value(&value)?);
                 Ok(())
             }
         }
@@ -413,16 +414,16 @@ fn key_must_be_a_string() -> Error {
 }
 
 impl serde::Serializer for MapKeySerializer {
-    type Ok = String;
+    type Ok = InternedString;
     type Error = Error;
 
-    type SerializeSeq = Impossible<String, Error>;
-    type SerializeTuple = Impossible<String, Error>;
-    type SerializeTupleStruct = Impossible<String, Error>;
-    type SerializeTupleVariant = Impossible<String, Error>;
-    type SerializeMap = Impossible<String, Error>;
-    type SerializeStruct = Impossible<String, Error>;
-    type SerializeStructVariant = Impossible<String, Error>;
+    type SerializeSeq = Impossible<InternedString, Error>;
+    type SerializeTuple = Impossible<InternedString, Error>;
+    type SerializeTupleStruct = Impossible<InternedString, Error>;
+    type SerializeTupleVariant = Impossible<InternedString, Error>;
+    type SerializeMap = Impossible<InternedString, Error>;
+    type SerializeStruct = Impossible<InternedString, Error>;
+    type SerializeStructVariant = Impossible<InternedString, Error>;
 
     #[inline]
     fn serialize_unit_variant(
@@ -430,85 +431,81 @@ impl serde::Serializer for MapKeySerializer {
         _name: &'static str,
         _variant_index: u32,
         variant: &'static str,
-    ) -> Result<String> {
-        Ok(variant.to_owned())
+    ) -> Result<InternedString> {
+        Ok(InternedString::intern(variant))
     }
 
     #[inline]
-    fn serialize_newtype_struct<T>(self, _name: &'static str, value: &T) -> Result<String>
+    fn serialize_newtype_struct<T>(self, _name: &'static str, value: &T) -> Result<InternedString>
     where
         T: ?Sized + Serialize,
     {
         value.serialize(self)
     }
 
-    fn serialize_bool(self, _value: bool) -> Result<String> {
+    fn serialize_bool(self, _value: bool) -> Result<InternedString> {
         Err(key_must_be_a_string())
     }
 
-    fn serialize_i8(self, value: i8) -> Result<String> {
-        Ok(value.to_string())
+    fn serialize_i8(self, value: i8) -> Result<InternedString> {
+        Ok(InternedString::from_display(&value))
     }
 
-    fn serialize_i16(self, value: i16) -> Result<String> {
-        Ok(value.to_string())
+    fn serialize_i16(self, value: i16) -> Result<InternedString> {
+        Ok(InternedString::from_display(&value))
     }
 
-    fn serialize_i32(self, value: i32) -> Result<String> {
-        Ok(value.to_string())
+    fn serialize_i32(self, value: i32) -> Result<InternedString> {
+        Ok(InternedString::from_display(&value))
     }
 
-    fn serialize_i64(self, value: i64) -> Result<String> {
-        Ok(value.to_string())
+    fn serialize_i64(self, value: i64) -> Result<InternedString> {
+        Ok(InternedString::from_display(&value))
     }
 
-    fn serialize_u8(self, value: u8) -> Result<String> {
-        Ok(value.to_string())
+    fn serialize_u8(self, value: u8) -> Result<InternedString> {
+        Ok(InternedString::from_display(&value))
     }
 
-    fn serialize_u16(self, value: u16) -> Result<String> {
-        Ok(value.to_string())
+    fn serialize_u16(self, value: u16) -> Result<InternedString> {
+        Ok(InternedString::from_display(&value))
     }
 
-    fn serialize_u32(self, value: u32) -> Result<String> {
-        Ok(value.to_string())
+    fn serialize_u32(self, value: u32) -> Result<InternedString> {
+        Ok(InternedString::from_display(&value))
     }
 
-    fn serialize_u64(self, value: u64) -> Result<String> {
-        Ok(value.to_string())
+    fn serialize_u64(self, value: u64) -> Result<InternedString> {
+        Ok(InternedString::from_display(&value))
     }
 
-    fn serialize_f32(self, _value: f32) -> Result<String> {
+    fn serialize_f32(self, _value: f32) -> Result<InternedString> {
         Err(key_must_be_a_string())
     }
 
-    fn serialize_f64(self, _value: f64) -> Result<String> {
+    fn serialize_f64(self, _value: f64) -> Result<InternedString> {
         Err(key_must_be_a_string())
     }
 
     #[inline]
-    fn serialize_char(self, value: char) -> Result<String> {
-        Ok({
-            let mut s = String::new();
-            s.push(value);
-            s
-        })
+    fn serialize_char(self, value: char) -> Result<InternedString> {
+        Ok(InternedString::from_display(&value))
     }
 
     #[inline]
-    fn serialize_str(self, value: &str) -> Result<String> {
-        Ok(value.to_owned())
+    fn serialize_str(self, value: &str) -> Result<InternedString> {
+        Ok(InternedString::intern(value))
     }
 
-    fn serialize_bytes(self, _value: &[u8]) -> Result<String> {
+    fn serialize_bytes(self, _value: &[u8]) -> Result<InternedString> {
         Err(key_must_be_a_string())
     }
 
-    fn serialize_unit(self) -> Result<String> {
+    fn serialize_unit(self) -> Result<InternedString> {
         Err(key_must_be_a_string())
     }
 
-    fn serialize_unit_struct(self, _name: &'static str) -> Result<String> {
+    fn serialize_unit_struct(self, _name: &'static str) -> Result<InternedString> {
         Err(key_must_be_a_string())
     }
 
@@ -518,18 +515,18 @@ impl serde::Serializer for MapKeySerializer {
         _variant_index: u32,
         _variant: &'static str,
         _value: &T,
-    ) -> Result<String>
+    ) -> Result<InternedString>
     where
         T: ?Sized + Serialize,
     {
         Err(key_must_be_a_string())
     }
 
-    fn serialize_none(self) -> Result<String> {
+    fn serialize_none(self) -> Result<InternedString> {
         Err(key_must_be_a_string())
     }
 
-    fn serialize_some<T>(self, _value: &T) -> Result<String>
+    fn serialize_some<T>(self, _value: &T) -> Result<InternedString>
     where
         T: ?Sized + Serialize,
     {
@@ -580,11 +577,11 @@ impl serde::Serializer for MapKeySerializer {
         Err(key_must_be_a_string())
     }
 
-    fn collect_str<T>(self, value: &T) -> Result<String>
+    fn collect_str<T>(self, value: &T) -> Result<InternedString>
     where
         T: ?Sized + Display,
     {
-        Ok(value.to_string())
+        Ok(InternedString::from_display(value))
     }
 }
 
@@ -617,7 +614,7 @@ impl serde::ser::SerializeStructVariant for SerializeStructVariant {
         T: ?Sized + Serialize,
     {
         self.map
-            .insert(Arc::new(String::from(key)), to_value(&value)?);
+            .insert(InternedString::intern(key), to_value(&value)?);
         Ok(())
     }
 

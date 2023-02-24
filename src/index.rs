@@ -1,5 +1,6 @@
 use std::fmt::{self, Display};
-use std::sync::Arc;
+
+use yasi::InternedString;
 
 use crate::{InOMap, Value};
 
@@ -82,7 +83,9 @@ impl Index for str {
             *v = Value::Object(InOMap::new());
         }
         match v {
-            Value::Object(map) => map.entry(Arc::new(self.to_owned())).or_insert(Value::Null),
+            Value::Object(map) => map
+                .entry(InternedString::intern(self))
+                .or_insert(Value::Null),
             _ => panic!("cannot access key {:?} in JSON {}", self, Type(v)),
         }
     }

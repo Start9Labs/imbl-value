@@ -20,6 +20,7 @@ pub mod treediff;
 pub use in_order_map::InOMap;
 
 pub use serde_json::Error;
+pub use yasi::InternedString;
 
 /// See the [`serde_json::value` module documentation](self) for usage examples.
 #[derive(Clone)]
@@ -82,7 +83,7 @@ pub enum Value {
     /// #
     /// let v = json!({ "an": "object" });
     /// ```
-    Object(InOMap<Arc<String>, Value>),
+    Object(InOMap<InternedString, Value>),
 }
 
 impl Debug for Value {
@@ -273,7 +274,7 @@ impl Value {
     /// // The array `["an", "array"]` is not an object.
     /// assert_eq!(v["b"].as_object(), None);
     /// ```
-    pub fn as_object(&self) -> Option<&InOMap<Arc<String>, Value>> {
+    pub fn as_object(&self) -> Option<&InOMap<InternedString, Value>> {
         match self {
             Value::Object(map) => Some(map),
             _ => None,
@@ -291,7 +292,7 @@ impl Value {
     /// v["a"].as_object_mut().unwrap().clear();
     /// assert_eq!(v, json!({ "a": {} }));
     /// ```
-    pub fn as_object_mut(&mut self) -> Option<&mut InOMap<Arc<String>, Value>> {
+    pub fn as_object_mut(&mut self) -> Option<&mut InOMap<InternedString, Value>> {
         match self {
             Value::Object(map) => Some(map),
             _ => None,
