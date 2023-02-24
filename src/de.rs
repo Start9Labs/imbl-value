@@ -1230,7 +1230,12 @@ impl Value {
     }
 }
 
-struct InternedStringDeserializer {
+impl From<InternedString> for InternedStringDeserializer {
+    fn from(value: InternedString) -> Self {
+        Self { value }
+    }
+}
+pub struct InternedStringDeserializer {
     value: InternedString,
 }
 
@@ -1282,7 +1287,7 @@ impl<'de> de::EnumAccess<'de> for InternedStringDeserializer {
     }
 }
 
-struct UnitOnly;
+pub struct UnitOnly;
 
 impl<'de> de::VariantAccess<'de> for UnitOnly {
     type Error = Error;
