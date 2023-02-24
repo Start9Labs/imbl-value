@@ -187,7 +187,7 @@ macro_rules! json {
     };
 
     ([]) => {
-        $crate::Value::Array(imbl::Vector::new())
+        $crate::Value::Array($crate::imbl::Vector::new())
     };
 
     ([ $($tt:tt)+ ]) => {
@@ -220,7 +220,7 @@ macro_rules! json {
 #[doc(hidden)]
 macro_rules! json_internal_vec {
     ($($content:tt)*) => {
-        imbl::vector![$($content)*]
+        $crate::imbl::vector![$($content)*]
     };
 }
 

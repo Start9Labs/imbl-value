@@ -19,6 +19,7 @@ pub mod treediff;
 
 pub use in_order_map::InOMap;
 
+pub use imbl;
 pub use serde_json::Error;
 pub use yasi::InternedString;
 
