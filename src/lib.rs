@@ -796,7 +796,8 @@ impl PartialEq for Value {
             (Value::Bool(a), Value::Bool(b)) => a == b,
             (Value::Null, Value::Null) => true,
             (Value::Number(a), Value::Number(b)) => a == b,
-            (Value::Object(a), Value::Object(b)) => a == b,
+
+            (Value::Object(a), Value::Object(b)) => a.ptr_eq(b) || a == b,
             (Value::String(a), Value::String(b)) => Arc::ptr_eq(a, b) || a == b,
             _ => false,
         }
