@@ -1,10 +1,10 @@
 use std::fmt;
 use std::mem;
-use std::sync::Arc;
 
 use crate::{in_order_map as map, InOMap as Map, Value as ImblValue};
 use imbl::Vector;
 use treediff::{Mutable, Value};
+use yasi::InternedString;
 
 /// A representation of all key types typical Value types will assume.
 #[derive(Debug, Clone, PartialEq, Eq, Ord, PartialOrd)]
@@ -12,7 +12,7 @@ pub enum Key {
     /// An array index
     Index(usize),
     /// A string index for mappings
-    String(Arc<String>),
+    String(InternedString),
 }
 
 impl fmt::Display for Key {
@@ -113,7 +113,7 @@ impl Mutable for ImblValue {
                             }
                             match c {
                                 ImblValue::Object(ref mut obj) => {
-                                    obj.get_mut(k.as_str()).expect("previous insertion")
+                                    obj.get_mut(&*k).expect("previous insertion")
                                 }
                                 _ => unreachable!(),
                             }
@@ -155,10 +155,10 @@ impl Mutable for ImblValue {
                 Key::String(ref k) => match { c } {
                     ImblValue::Object(ref mut obj) => {
                         if i == last_key_index {
-                            obj.remove(k.as_str());
+                            obj.remove(&*k);
                             return;
                         } else {
-                            match obj.get_mut(k.as_str()) {
+                            match obj.get_mut(&*k) {
                                 Some(json) => json,
                                 None => return,
                             }
