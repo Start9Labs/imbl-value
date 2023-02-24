@@ -678,7 +678,7 @@ impl Value {
             .map(|x| x.replace("~1", "/").replace("~0", "~"))
             .map(Arc::new)
             .try_fold(self, |target, token| match target {
-                Value::Object(map) => map.get(&*token),
+                Value::Object(map) => map.get(&**token),
                 Value::Array(list) => parse_index(&token).and_then(|x| list.get(x)),
                 _ => None,
             })
@@ -734,7 +734,7 @@ impl Value {
             .map(|x| x.replace("~1", "/").replace("~0", "~"))
             .map(Arc::new)
             .try_fold(self, |target, token| match target {
-                Value::Object(map) => map.get_mut(&*token),
+                Value::Object(map) => map.get_mut(&**token),
                 Value::Array(list) => parse_index(&token).and_then(move |x| list.get_mut(x)),
                 _ => None,
             })
