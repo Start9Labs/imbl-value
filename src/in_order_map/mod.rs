@@ -45,7 +45,11 @@ where
     V: Eq + Clone,
 {
     fn eq(&self, other: &Self) -> bool {
-        self.value.ptr_eq(&other.value) || self.value == other.value
+        self.value.ptr_eq(&other.value) || self.value == other.value || {
+            self.value.len() == other.value.len() && {
+                self.value.iter().all(|(k, v)| other.get(k) == Some(v))
+            }
+        }
     }
 }
 
