@@ -78,7 +78,7 @@ macro_rules! json {
 
     // Insert the current entry followed by trailing comma.
     (@object $object:ident [$($key:tt)+] ($value:expr) , $($rest:tt)*) => {
-        let _ = $object.insert(yasi::InternedString::intern(($($key)+)), $value);
+        let _ = $object.insert($crate::InternedString::intern(($($key)+)), $value);
         json!(@object $object () ($($rest)*) ($($rest)*));
     };
 
@@ -89,7 +89,7 @@ macro_rules! json {
 
     // Insert the last entry without trailing comma.
     (@object $object:ident [$($key:tt)+] ($value:expr)) => {
-        let _ = $object.insert(yasi::InternedString::intern(($($key)+)), $value);
+        let _ = $object.insert($crate::InternedString::intern(($($key)+)), $value);
     };
 
     // Next value is `null`.
