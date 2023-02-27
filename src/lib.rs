@@ -16,11 +16,19 @@ pub mod ser;
 #[cfg(feature = "treediff")]
 pub mod treediff;
 
-pub use in_order_map::InOMap;
-
 pub use imbl;
-pub use serde_json::Error;
+pub use in_order_map::InOMap;
 pub use yasi::InternedString;
+
+pub enum ErrorKind {
+    Serialization,
+    Deserialization,
+}
+
+pub struct Error {
+    pub kind: ErrorKind,
+    pub source: serde_json::Error,
+}
 
 /// See the [`serde_json::value` module documentation](self) for usage examples.
 #[derive(Clone)]
@@ -854,14 +862,20 @@ pub fn to_value<T>(value: &T) -> Result<Value, Error>
 where
     T: Serialize,
 {
-    value.serialize(ser::Serializer)
+    value.serialize(ser::Serializer).map_err(|e| Error {
+        kind: ErrorKind::Serialization,
+        source: e,
+    })
 }
 
 pub fn from_value<T>(value: Value) -> Result<T, Error>
 where
     T: DeserializeOwned,
 {
-    T::deserialize(value)
+    T::deserialize(value).map_err(|e| Error {
+        kind: ErrorKind::Deserialization,
+        source: e,
+    })
 }
 
 #[test]
