@@ -20,15 +20,23 @@ pub use imbl;
 pub use in_order_map::InOMap;
 pub use yasi::InternedString;
 
+#[derive(Debug)]
 pub enum ErrorKind {
     Serialization,
     Deserialization,
 }
 
+#[derive(Debug)]
 pub struct Error {
     pub kind: ErrorKind,
     pub source: serde_json::Error,
 }
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?} Error: {}", self.kind, self.source)
+    }
+}
+impl std::error::Error for Error {}
 
 /// See the [`serde_json::value` module documentation](self) for usage examples.
 #[derive(Clone)]
