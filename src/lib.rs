@@ -13,7 +13,6 @@ pub mod in_order_map;
 pub mod index;
 pub mod macros;
 pub mod ser;
-// pub mod ser;
 #[cfg(feature = "treediff")]
 pub mod treediff;
 

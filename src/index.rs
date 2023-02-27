@@ -28,6 +28,10 @@ pub trait Index {
     #[doc(hidden)]
     fn index_into_mut<'v>(&self, v: &'v mut Value) -> Option<&'v mut Value>;
 
+    /// Return None if the key is not already in the array or object.
+    #[doc(hidden)]
+    fn index_into_owned(&self, v: Value) -> Option<Value>;
+
     /// Panic if array index out of bounds. If key is not already in the object,
     /// insert it with a value of null. Panic if Value is a type that cannot be
     /// indexed into, except if Value is null then it can be treated as an empty
@@ -46,6 +50,18 @@ impl Index for usize {
     fn index_into_mut<'v>(&self, v: &'v mut Value) -> Option<&'v mut Value> {
         match v {
             Value::Array(vec) => vec.get_mut(*self),
+            _ => None,
+        }
+    }
+    fn index_into_owned(&self, v: Value) -> Option<Value> {
+        match v {
+            Value::Array(mut vec) => {
+                if vec.len() > *self {
+                    Some(vec.remove(*self))
+                } else {
+                    None
+                }
+            }
             _ => None,
         }
     }
@@ -78,6 +94,12 @@ impl Index for str {
             _ => None,
         }
     }
+    fn index_into_owned(&self, v: Value) -> Option<Value> {
+        match v {
+            Value::Object(mut map) => map.remove(self),
+            _ => None,
+        }
+    }
     fn index_or_insert<'v>(&self, v: &'v mut Value) -> &'v mut Value {
         if let Value::Null = v {
             *v = Value::Object(InOMap::new());
@@ -98,6 +120,9 @@ impl Index for String {
     fn index_into_mut<'v>(&self, v: &'v mut Value) -> Option<&'v mut Value> {
         self[..].index_into_mut(v)
     }
+    fn index_into_owned(&self, v: Value) -> Option<Value> {
+        self[..].index_into_owned(v)
+    }
     fn index_or_insert<'v>(&self, v: &'v mut Value) -> &'v mut Value {
         self[..].index_or_insert(v)
     }
@@ -112,6 +137,9 @@ where
     }
     fn index_into_mut<'v>(&self, v: &'v mut Value) -> Option<&'v mut Value> {
         (**self).index_into_mut(v)
+    }
+    fn index_into_owned(&self, v: Value) -> Option<Value> {
+        (**self).index_into_owned(v)
     }
     fn index_or_insert<'v>(&self, v: &'v mut Value) -> &'v mut Value {
         (**self).index_or_insert(v)
