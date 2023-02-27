@@ -18,6 +18,7 @@ pub mod treediff;
 
 pub use imbl;
 pub use in_order_map::InOMap;
+pub use serde_json::Error as ErrorSource;
 pub use yasi::InternedString;
 
 #[derive(Debug)]
@@ -29,7 +30,7 @@ pub enum ErrorKind {
 #[derive(Debug)]
 pub struct Error {
     pub kind: ErrorKind,
-    pub source: serde_json::Error,
+    pub source: ErrorSource,
 }
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
