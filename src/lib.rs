@@ -21,6 +21,8 @@ pub use in_order_map::InOMap;
 pub use serde_json::Error as ErrorSource;
 pub use yasi::InternedString;
 
+pub const NULL: Value = Value::Null;
+
 #[derive(Debug)]
 pub enum ErrorKind {
     Serialization,
