@@ -19,6 +19,7 @@ pub mod treediff;
 pub use imbl;
 pub use in_order_map::InOMap;
 pub use serde_json::Error as ErrorSource;
+pub use serde_json::Number;
 pub use yasi::InternedString;
 
 pub const NULL: Value = Value::Null;
@@ -69,7 +70,7 @@ pub enum Value {
     /// #
     /// let v = json!(12.5);
     /// ```
-    Number(serde_json::Number),
+    Number(Number),
 
     /// Represents a JSON string.
     ///
