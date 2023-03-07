@@ -825,6 +825,39 @@ impl PartialEq for Value {
 }
 impl Eq for Value {}
 
+impl PartialEq<f64> for Value {
+    fn eq(&self, other: &f64) -> bool {
+        match self {
+            Value::Number(n) => n.as_f64() == Some(*other),
+            _ => false,
+        }
+    }
+}
+impl PartialEq<i64> for Value {
+    fn eq(&self, other: &i64) -> bool {
+        match self {
+            Value::Number(n) => n.as_i64() == Some(*other),
+            _ => false,
+        }
+    }
+}
+impl PartialEq<u64> for Value {
+    fn eq(&self, other: &u64) -> bool {
+        match self {
+            Value::Number(n) => n.as_u64() == Some(*other),
+            _ => false,
+        }
+    }
+}
+impl PartialEq<str> for Value {
+    fn eq(&self, other: &str) -> bool {
+        match self {
+            Value::String(s) => &**s == other,
+            _ => false,
+        }
+    }
+}
+
 // impl From<serde_json::Value> for Value {
 //     fn from(value: serde_json::Value) -> Self {
 //         match value {
