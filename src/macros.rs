@@ -1,6 +1,14 @@
-#[macro_export]
-#[doc(hidden)]
+#[macro_export(local_inner_macros)]
 macro_rules! json {
+    // Hide distracting implementation details from the generated rustdoc.
+    ($($json:tt)+) => {
+        json_internal!($($json)+)
+    };
+}
+
+#[macro_export(local_inner_macros)]
+#[doc(hidden)]
+macro_rules! json_internal {
 //////////////////////////////////////////////////////////////////////////
     // TT muncher for parsing the inside of an array [...]. Produces a vec![...]
     // of the elements.
