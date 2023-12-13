@@ -184,6 +184,38 @@ impl Display for Value {
     }
 }
 
+impl From<serde_json::Value> for Value {
+    fn from(value: serde_json::Value) -> Self {
+        match value {
+            serde_json::Value::Array(a) => Self::Array(a.into_iter().map(|a| a.into()).collect()),
+            serde_json::Value::Bool(a) => Self::Bool(a),
+            serde_json::Value::Null => Self::Null,
+            serde_json::Value::Number(a) => Self::Number(a),
+            serde_json::Value::Object(a) => {
+                Self::Object(a.into_iter().map(|(a, b)| (a.into(), b.into())).collect())
+            }
+            serde_json::Value::String(a) => Self::String(a.into()),
+        }
+    }
+}
+
+impl From<Value> for serde_json::Value {
+    fn from(value: Value) -> Self {
+        match value {
+            Value::Array(a) => Self::Array(a.into_iter().map(|a| a.into()).collect()),
+            Value::Bool(a) => Self::Bool(a),
+            Value::Null => Self::Null,
+            Value::Number(a) => Self::Number(a),
+            Value::Object(a) => Self::Object(
+                a.into_iter()
+                    .map(|(a, b)| ((&*a).to_owned(), b.into()))
+                    .collect(),
+            ),
+            Value::String(a) => Self::String((&*a).to_owned()),
+        }
+    }
+}
+
 fn parse_index(s: &str) -> Option<usize> {
     if s.starts_with('+') || (s.starts_with('0') && s.len() != 1) {
         return None;
