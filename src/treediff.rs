@@ -29,15 +29,13 @@ impl Value for ImblValue {
     type Item = ImblValue;
     fn items<'a>(&'a self) -> Option<Box<dyn Iterator<Item = (Self::Key, &'a Self::Item)> + 'a>> {
         match *self {
-            ImblValue::String(_) | ImblValue::Number(_) | ImblValue::Bool(_) | ImblValue::Null => {
-                None
-            }
-            ImblValue::Array(ref inner) => Some(Box::new(
+            ImblValue::Array(ref inner) if !inner.is_empty() => Some(Box::new(
                 inner.iter().enumerate().map(|(i, v)| (Key::Index(i), v)),
             )),
-            ImblValue::Object(ref inner) => Some(Box::new(
+            ImblValue::Object(ref inner) if !inner.is_empty() => Some(Box::new(
                 inner.iter().map(|(s, v)| (Key::String(s.clone()), v)),
             )),
+            _ => None,
         }
     }
 }
@@ -183,4 +181,34 @@ impl Mutable for ImblValue {
             }
         }
     }
+}
+
+#[test]
+fn diff_empty_collection() {
+    let empty_arr = ImblValue::Array(Default::default());
+    let empty_obj = ImblValue::Object(Default::default());
+    let mut rec = treediff::tools::Recorder::default();
+    treediff::diff(&empty_arr, &empty_obj, &mut rec);
+    assert_ne!(
+        rec.calls
+            .iter()
+            .find(|c| !matches!(c, treediff::tools::ChangeType::Unchanged(_, _))),
+        None
+    );
+    let mut rec = treediff::tools::Recorder::default();
+    treediff::diff(&empty_arr, &empty_arr, &mut rec);
+    assert_eq!(
+        rec.calls
+            .iter()
+            .find(|c| !matches!(c, treediff::tools::ChangeType::Unchanged(_, _))),
+        None
+    );
+    let mut rec = treediff::tools::Recorder::default();
+    treediff::diff(&empty_obj, &empty_obj, &mut rec);
+    assert_eq!(
+        rec.calls
+            .iter()
+            .find(|c| !matches!(c, treediff::tools::ChangeType::Unchanged(_, _))),
+        None
+    );
 }

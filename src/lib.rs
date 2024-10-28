@@ -972,7 +972,7 @@ fn test_serialize_loop() {
     );
     assert_eq!(
         value,
-        serde_json::from_str(&serde_json::to_string(&value).unwrap()).unwrap(),
+        serde_json::from_str::<Value>(&serde_json::to_string(&value).unwrap()).unwrap(),
     );
 
     assert_eq!(value["f"]["h"].as_str().unwrap(), "i");

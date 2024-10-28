@@ -7,11 +7,11 @@ license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
-default = []
+default = ["treediff"]
 
 [dependencies]
-imbl = { version = "2.*", features = ["serde", "small-chunks"] }
-serde_json = "1.*"
-serde = { version = "1.*", features = ["derive", "rc"] }
-treediff = { version = "4.*", optional = true }
+imbl = { version = "2", features = ["serde", "small-chunks"] }
+serde_json = "1"
+serde = { version = "1", features = ["derive", "rc"] }
+treediff = { version = "4", optional = true }
 yasi = "0.1"
