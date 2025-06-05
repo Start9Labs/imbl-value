@@ -1,6 +1,6 @@
 [package]
 name = "imbl-value"
-version = "0.1.2"
+version = "0.2.0"
 edition = "2021"
 description = "A JSON `Value` type built on `imbl`"
 license = "MIT"
@@ -10,8 +10,8 @@ license = "MIT"
 default = []
 
 [dependencies]
-imbl = { version = "2", features = ["serde", "small-chunks"] }
+imbl = { version = "4", features = ["serde", "small-chunks"] }
 serde_json = "1"
 serde = { version = "1", features = ["derive", "rc"] }
-treediff = { version = "4", optional = true }
+treediff = { version = "5", optional = true }
 yasi = "0.1"

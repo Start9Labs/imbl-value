@@ -159,7 +159,7 @@ where
         K: Borrow<BK> + PartialEq<BK>,
     {
         let key = key.borrow();
-        self.iter().find(|(k, _)| k.deref() == key).map(|x| &x.1)
+        self.iter().find(|(k, _)| k == key).map(|x| &x.1)
     }
     #[must_use]
     pub fn get_key_value<BK>(&self, key: &BK) -> Option<(&K, &V)>
@@ -267,7 +267,7 @@ where
     {
         self.value
             .iter_mut()
-            .find(|(k, _)| k.deref() == key.borrow())
+            .find(|(k, _)| k == key.borrow())
             .map(|(_, v)| v)
     }
 
