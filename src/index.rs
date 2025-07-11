@@ -166,8 +166,8 @@ where
     /// # Examples
     ///
     /// ```
-    /// # use serde_json::json;
-    /// #
+    /// use imbl_value::json;
+    ///
     /// let data = json!({
     ///     "x": {
     ///         "y": ["z", "zz"]
@@ -205,8 +205,8 @@ where
     /// # Examples
     ///
     /// ```
-    /// # use serde_json::json;
-    /// #
+    /// use imbl_value::json;
+    ///
     /// let mut data = json!({ "x": 0 });
     ///
     /// // replace an existing key

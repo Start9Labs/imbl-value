@@ -13,8 +13,6 @@ pub mod in_order_map;
 pub mod index;
 pub mod macros;
 pub mod ser;
-#[cfg(feature = "treediff")]
-pub mod treediff;
 
 pub use imbl;
 pub use in_order_map::InOMap;
@@ -48,8 +46,8 @@ pub enum Value {
     /// Represents a JSON null value.
     ///
     /// ```
-    /// # use serde_json::json;
-    /// #
+    /// use imbl_value::json;
+    ///
     /// let v = json!(null);
     /// ```
     Null,
@@ -57,8 +55,8 @@ pub enum Value {
     /// Represents a JSON boolean.
     ///
     /// ```
-    /// # use serde_json::json;
-    /// #
+    /// use imbl_value::json;
+    ///
     /// let v = json!(true);
     /// ```
     Bool(bool),
@@ -66,8 +64,8 @@ pub enum Value {
     /// Represents a JSON number, whether integer or floating point.
     ///
     /// ```
-    /// # use serde_json::json;
-    /// #
+    /// use imbl_value::json;
+    ///
     /// let v = json!(12.5);
     /// ```
     Number(Number),
@@ -75,8 +73,8 @@ pub enum Value {
     /// Represents a JSON string.
     ///
     /// ```
-    /// # use serde_json::json;
-    /// #
+    /// use imbl_value::json;
+    ///
     /// let v = json!("a string");
     /// ```
     String(Arc<String>),
@@ -84,8 +82,8 @@ pub enum Value {
     /// Represents a JSON array.
     ///
     /// ```
-    /// # use serde_json::json;
-    /// #
+    /// use imbl_value::json;
+    ///
     /// let v = json!(["an", "array"]);
     /// ```
     Array(Vector<Value>),
@@ -99,8 +97,8 @@ pub enum Value {
     /// string while retaining the order of map keys in the input.
     ///
     /// ```
-    /// # use serde_json::json;
-    /// #
+    /// use imbl_value::json;
+    ///
     /// let v = json!({ "an": "object" });
     /// ```
     Object(InOMap<InternedString, Value>),
@@ -129,8 +127,8 @@ impl Display for Value {
     /// Display a JSON value as a string.
     ///
     /// ```
-    /// # use serde_json::json;
-    /// #
+    /// use imbl_value::json;
+    ///
     /// let json = json!({ "city": "London", "street": "10 Downing Street" });
     ///
     /// // Compact format:
@@ -237,8 +235,8 @@ impl Value {
     /// or the given index is not within the bounds of the array.
     ///
     /// ```
-    /// # use serde_json::json;
-    /// #
+    /// use imbl_value::json;
+    ///
     /// let object = json!({ "A": 65, "B": 66, "C": 67 });
     /// assert_eq!(*object.get("A").unwrap(), json!(65));
     ///
@@ -253,8 +251,8 @@ impl Value {
     /// `None`.
     ///
     /// ```
-    /// # use serde_json::json;
-    /// #
+    /// use imbl_value::json;
+    ///
     /// let object = json!({
     ///     "A": ["a", "á", "à"],
     ///     "B": ["b", "b́"],
@@ -279,8 +277,8 @@ impl Value {
     /// or the given index is not within the bounds of the array.
     ///
     /// ```
-    /// # use serde_json::json;
-    /// #
+    /// use imbl_value::json;
+    ///
     /// let mut object = json!({ "A": 65, "B": 66, "C": 67 });
     /// *object.get_mut("A").unwrap() = json!(69);
     ///
@@ -298,8 +296,8 @@ impl Value {
     /// object.
     ///
     /// ```
-    /// # use serde_json::json;
-    /// #
+    /// use imbl_value::json;
+    ///
     /// let obj = json!({ "a": { "nested": true }, "b": ["an", "array"] });
     ///
     /// assert!(obj.is_object());
@@ -316,8 +314,8 @@ impl Value {
     /// otherwise.
     ///
     /// ```
-    /// # use serde_json::json;
-    /// #
+    /// use imbl_value::json;
+    ///
     /// let v = json!({ "a": { "nested": true }, "b": ["an", "array"] });
     ///
     /// // The length of `{"nested": true}` is 1 entry.
@@ -337,8 +335,8 @@ impl Value {
     /// Returns None otherwise.
     ///
     /// ```
-    /// # use serde_json::json;
-    /// #
+    /// use imbl_value::json;
+    ///
     /// let mut v = json!({ "a": { "nested": true } });
     ///
     /// v["a"].as_object_mut().unwrap().clear();
@@ -358,8 +356,8 @@ impl Value {
     /// array.
     ///
     /// ```
-    /// # use serde_json::json;
-    /// #
+    /// use imbl_value::json;
+    ///
     /// let obj = json!({ "a": ["an", "array"], "b": { "an": "object" } });
     ///
     /// assert!(obj["a"].is_array());
@@ -375,8 +373,8 @@ impl Value {
     /// otherwise.
     ///
     /// ```
-    /// # use serde_json::json;
-    /// #
+    /// use imbl_value::json;
+    ///
     /// let v = json!({ "a": ["an", "array"], "b": { "an": "object" } });
     ///
     /// // The length of `["an", "array"]` is 2 elements.
@@ -396,8 +394,8 @@ impl Value {
     /// Returns None otherwise.
     ///
     /// ```
-    /// # use serde_json::json;
-    /// #
+    /// use imbl_value::json;
+    ///
     /// let mut v = json!({ "a": ["an", "array"] });
     ///
     /// v["a"].as_array_mut().unwrap().clear();
@@ -416,8 +414,8 @@ impl Value {
     /// to return the string slice.
     ///
     /// ```
-    /// # use serde_json::json;
-    /// #
+    /// use imbl_value::json;
+    ///
     /// let v = json!({ "a": "some string", "b": false });
     ///
     /// assert!(v["a"].is_string());
@@ -433,8 +431,8 @@ impl Value {
     /// otherwise.
     ///
     /// ```
-    /// # use serde_json::json;
-    /// #
+    /// use imbl_value::json;
+    ///
     /// let v = json!({ "a": "some string", "b": false });
     ///
     /// assert_eq!(v["a"].as_str(), Some("some string"));
@@ -462,8 +460,8 @@ impl Value {
     /// Returns true if the `Value` is a Number. Returns false otherwise.
     ///
     /// ```
-    /// # use serde_json::json;
-    /// #
+    /// use imbl_value::json;
+    ///
     /// let v = json!({ "a": 1, "b": "2" });
     ///
     /// assert!(v["a"].is_number());
@@ -485,8 +483,8 @@ impl Value {
     /// return the integer value.
     ///
     /// ```
-    /// # use serde_json::json;
-    /// #
+    /// use imbl_value::json;
+    ///
     /// let big = i64::max_value() as u64 + 10;
     /// let v = json!({ "a": 64, "b": big, "c": 256.0 });
     ///
@@ -511,8 +509,8 @@ impl Value {
     /// return the integer value.
     ///
     /// ```
-    /// # use serde_json::json;
-    /// #
+    /// use imbl_value::json;
+    ///
     /// let v = json!({ "a": 64, "b": -64, "c": 256.0 });
     ///
     /// assert!(v["a"].is_u64());
@@ -539,8 +537,8 @@ impl Value {
     /// `is_u64` return false but this is not a guarantee in the future.
     ///
     /// ```
-    /// # use serde_json::json;
-    /// #
+    /// use imbl_value::json;
+    ///
     /// let v = json!({ "a": 256.0, "b": 64, "c": -64 });
     ///
     /// assert!(v["a"].is_f64());
@@ -560,8 +558,8 @@ impl Value {
     /// None otherwise.
     ///
     /// ```
-    /// # use serde_json::json;
-    /// #
+    /// use imbl_value::json;
+    ///
     /// let big = i64::max_value() as u64 + 10;
     /// let v = json!({ "a": 64, "b": big, "c": 256.0 });
     ///
@@ -580,8 +578,8 @@ impl Value {
     /// None otherwise.
     ///
     /// ```
-    /// # use serde_json::json;
-    /// #
+    /// use imbl_value::json;
+    ///
     /// let v = json!({ "a": 64, "b": -64, "c": 256.0 });
     ///
     /// assert_eq!(v["a"].as_u64(), Some(64));
@@ -599,8 +597,8 @@ impl Value {
     /// None otherwise.
     ///
     /// ```
-    /// # use serde_json::json;
-    /// #
+    /// use imbl_value::json;
+    ///
     /// let v = json!({ "a": 256.0, "b": 64, "c": -64 });
     ///
     /// assert_eq!(v["a"].as_f64(), Some(256.0));
@@ -620,8 +618,8 @@ impl Value {
     /// guaranteed to return the boolean value.
     ///
     /// ```
-    /// # use serde_json::json;
-    /// #
+    /// use imbl_value::json;
+    ///
     /// let v = json!({ "a": false, "b": "false" });
     ///
     /// assert!(v["a"].is_boolean());
@@ -637,8 +635,8 @@ impl Value {
     /// otherwise.
     ///
     /// ```
-    /// # use serde_json::json;
-    /// #
+    /// use imbl_value::json;
+    ///
     /// let v = json!({ "a": false, "b": "false" });
     ///
     /// assert_eq!(v["a"].as_bool(), Some(false));
@@ -659,8 +657,8 @@ impl Value {
     /// to return `Some(())`.
     ///
     /// ```
-    /// # use serde_json::json;
-    /// #
+    /// use imbl_value::json;
+    ///
     /// let v = json!({ "a": null, "b": false });
     ///
     /// assert!(v["a"].is_null());
@@ -675,8 +673,8 @@ impl Value {
     /// If the `Value` is a Null, returns (). Returns None otherwise.
     ///
     /// ```
-    /// # use serde_json::json;
-    /// #
+    /// use imbl_value::json;
+    ///
     /// let v = json!({ "a": null, "b": false });
     ///
     /// assert_eq!(v["a"].as_null(), Some(()));
@@ -706,8 +704,8 @@ impl Value {
     /// # Examples
     ///
     /// ```
-    /// # use serde_json::json;
-    /// #
+    /// use imbl_value::json;
+    ///
     /// let data = json!({
     ///     "x": {
     ///         "y": ["z", "zz"]
@@ -752,7 +750,7 @@ impl Value {
     /// # Example of Use
     ///
     /// ```
-    /// use serde_json::Value;
+    /// use imbl_value::Value;
     ///
     /// fn main() {
     ///     let s = r#"{"x": 1.0, "y": 2.0}"#;
@@ -795,14 +793,34 @@ impl Value {
     /// Takes the value out of the `Value`, leaving a `Null` in its place.
     ///
     /// ```
-    /// # use serde_json::json;
-    /// #
+    /// use serde_json::json;
+    ///
     /// let mut v = json!({ "x": "y" });
     /// assert_eq!(v["x"].take(), json!("y"));
     /// assert_eq!(v, json!({ "x": null }));
     /// ```
     pub fn take(&mut self) -> Value {
         ::std::mem::replace(self, Value::Null)
+    }
+
+    /// Compares whether the values refer to the same data in memory
+    ///
+    /// ```
+    /// use imbl_value::json;
+    ///
+    /// let a = json!({ "x": "y" });
+    /// let b = a.clone();
+    /// let c = json!({ "x": "y" });
+    /// assert!(a.ptr_eq(b));
+    /// assert!(!a.ptr_eq(c));
+    /// ```
+    pub fn ptr_eq(&self, other: &Value) -> bool {
+        match (self, other) {
+            (Self::Array(a), Self::Array(b)) => a.ptr_eq(b),
+            (Self::Object(a), Self::Object(b)) => a.ptr_eq(b),
+            (Self::String(a), Self::String(b)) => Arc::ptr_eq(a, b),
+            (a, b) => a == b, // primitive - trivial comparison
+        }
     }
 }
 
@@ -814,7 +832,7 @@ impl Value {
 ///
 /// ```
 /// # use serde::Deserialize;
-/// use serde_json::Value;
+/// use imbl_value::Value;
 ///
 /// #[derive(Deserialize)]
 /// struct Settings {
