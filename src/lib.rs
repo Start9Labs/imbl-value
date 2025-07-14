@@ -46,7 +46,6 @@ impl std::error::Error for Error {}
 
 /// See the [`serde_json::value` module documentation](self) for usage examples.
 #[derive(Clone)]
-#[cfg_attr(feature = "arbitrary", derive(proptest_derive::Arbitrary))]
 pub enum Value {
     /// Represents a JSON null value.
     ///
@@ -73,10 +72,6 @@ pub enum Value {
     ///
     /// let v = json!(12.5);
     /// ```
-    #[cfg_attr(
-        feature = "arbitrary",
-        proptest(strategy = "arbitrary::number_strategy()")
-    )]
     Number(Number),
 
     /// Represents a JSON string.
@@ -95,10 +90,6 @@ pub enum Value {
     ///
     /// let v = json!(["an", "array"]);
     /// ```
-    #[cfg_attr(
-        feature = "arbitrary",
-        proptest(strategy = "arbitrary::array_strategy()")
-    )]
     Array(Vector<Value>),
 
     /// Represents a JSON object.
@@ -114,10 +105,6 @@ pub enum Value {
     ///
     /// let v = json!({ "an": "object" });
     /// ```
-    #[cfg_attr(
-        feature = "arbitrary",
-        proptest(strategy = "arbitrary::object_strategy()")
-    )]
     Object(InOMap<InternedString, Value>),
 }
 
