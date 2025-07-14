@@ -39,6 +39,26 @@ where
     value: Vector<(K, V)>,
 }
 
+impl<K, V> From<Vector<(K, V)>> for InOMap<K, V>
+where
+    K: Eq + Clone,
+    V: Clone,
+{
+    fn from(value: Vector<(K, V)>) -> Self {
+        Self { value }
+    }
+}
+
+impl<K, V> From<InOMap<K, V>> for Vector<(K, V)>
+where
+    K: Eq + Clone,
+    V: Clone,
+{
+    fn from(value: InOMap<K, V>) -> Self {
+        value.value
+    }
+}
+
 impl<K, V> PartialEq for InOMap<K, V>
 where
     K: Eq + Clone,

@@ -9,10 +9,14 @@ use std::{
 };
 
 pub mod de;
+mod from;
 pub mod in_order_map;
 pub mod index;
 pub mod macros;
 pub mod ser;
+
+#[cfg(feature = "arbitrary")]
+mod arbitrary;
 
 pub use imbl;
 pub use in_order_map::InOMap;
@@ -42,6 +46,7 @@ impl std::error::Error for Error {}
 
 /// See the [`serde_json::value` module documentation](self) for usage examples.
 #[derive(Clone)]
+#[cfg_attr(feature = "arbitrary", derive(proptest_derive::Arbitrary))]
 pub enum Value {
     /// Represents a JSON null value.
     ///
@@ -68,6 +73,10 @@ pub enum Value {
     ///
     /// let v = json!(12.5);
     /// ```
+    #[cfg_attr(
+        feature = "arbitrary",
+        proptest(strategy = "arbitrary::number_strategy()")
+    )]
     Number(Number),
 
     /// Represents a JSON string.
@@ -86,6 +95,10 @@ pub enum Value {
     ///
     /// let v = json!(["an", "array"]);
     /// ```
+    #[cfg_attr(
+        feature = "arbitrary",
+        proptest(strategy = "arbitrary::array_strategy()")
+    )]
     Array(Vector<Value>),
 
     /// Represents a JSON object.
@@ -101,6 +114,10 @@ pub enum Value {
     ///
     /// let v = json!({ "an": "object" });
     /// ```
+    #[cfg_attr(
+        feature = "arbitrary",
+        proptest(strategy = "arbitrary::object_strategy()")
+    )]
     Object(InOMap<InternedString, Value>),
 }
 
@@ -181,38 +198,6 @@ impl Display for Value {
         } else {
             // {}
             serde_json::ser::to_writer(&mut wr, self).map_err(|_| fmt::Error)
-        }
-    }
-}
-
-impl From<serde_json::Value> for Value {
-    fn from(value: serde_json::Value) -> Self {
-        match value {
-            serde_json::Value::Array(a) => Self::Array(a.into_iter().map(|a| a.into()).collect()),
-            serde_json::Value::Bool(a) => Self::Bool(a),
-            serde_json::Value::Null => Self::Null,
-            serde_json::Value::Number(a) => Self::Number(a),
-            serde_json::Value::Object(a) => {
-                Self::Object(a.into_iter().map(|(a, b)| (a.into(), b.into())).collect())
-            }
-            serde_json::Value::String(a) => Self::String(a.into()),
-        }
-    }
-}
-
-impl From<Value> for serde_json::Value {
-    fn from(value: Value) -> Self {
-        match value {
-            Value::Array(a) => Self::Array(a.into_iter().map(|a| a.into()).collect()),
-            Value::Bool(a) => Self::Bool(a),
-            Value::Null => Self::Null,
-            Value::Number(a) => Self::Number(a),
-            Value::Object(a) => Self::Object(
-                a.into_iter()
-                    .map(|(a, b)| ((&*a).to_owned(), b.into()))
-                    .collect(),
-            ),
-            Value::String(a) => Self::String((&*a).to_owned()),
         }
     }
 }
@@ -811,8 +796,8 @@ impl Value {
     /// let a = json!({ "x": "y" });
     /// let b = a.clone();
     /// let c = json!({ "x": "y" });
-    /// assert!(a.ptr_eq(b));
-    /// assert!(!a.ptr_eq(c));
+    /// assert!(a.ptr_eq(&b));
+    /// assert!(!a.ptr_eq(&c));
     /// ```
     pub fn ptr_eq(&self, other: &Value) -> bool {
         match (self, other) {
@@ -907,51 +892,6 @@ impl PartialEq<str> for Value {
         }
     }
 }
-
-// impl From<serde_json::Value> for Value {
-//     fn from(value: serde_json::Value) -> Self {
-//         match value {
-//             serde_json::Value::Null => Value::Null,
-//             serde_json::Value::Bool(a) => Value::Bool(a),
-//             serde_json::Value::Number(a) => Value::Number(a),
-//             serde_json::Value::String(a) => Value::String(Arc::new(a)),
-//             serde_json::Value::Array(a) => Value::Array(a.into_iter().map(Value::from).collect()),
-//             serde_json::Value::Object(a) => Value::Object(
-//                 a.into_iter()
-//                     .map(|(k, v)| (Arc::new(k), Value::from(v)))
-//                     .collect(),
-//             ),
-//         }
-//     }
-// }
-// impl From<Value> for serde_json::Value {
-//     fn from(value: Value) -> Self {
-//         use serde_json::Value as JValue;
-//         match value {
-//             Value::Null => JValue::Null,
-//             Value::Bool(x) => JValue::Bool(x),
-//             Value::Number(x) => JValue::Number(x),
-//             Value::String(x) => JValue::String(match Arc::try_unwrap(x) {
-//                 Ok(x) => x,
-//                 Err(x) => x.deref().to_owned(),
-//             }),
-//             Value::Array(x) => JValue::Array(x.into_iter().map(JValue::from).collect()),
-//             Value::Object(x) => JValue::Object(
-//                 x.into_iter()
-//                     .map(|(k, v)| {
-//                         (
-//                             match Arc::try_unwrap(k) {
-//                                 Ok(x) => x,
-//                                 Err(x) => x.deref().to_owned(),
-//                             },
-//                             JValue::from(v),
-//                         )
-//                     })
-//                     .collect(),
-//             ),
-//         }
-//     }
-// }
 
 pub fn to_value<T>(value: &T) -> Result<Value, Error>
 where
