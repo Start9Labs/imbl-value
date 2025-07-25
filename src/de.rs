@@ -1,5 +1,6 @@
 use core::fmt;
 use core::str::FromStr;
+use imbl::shared_ptr::DefaultSharedPtr;
 use imbl::Vector;
 use serde::de::{
     self, Deserialize, DeserializeSeed, EnumAccess, Expected, IntoDeserializer, MapAccess,
@@ -538,7 +539,7 @@ impl<'de> VariantAccess<'de> for VariantDeserializer {
 }
 
 struct SeqDeserializer {
-    iter: imbl::vector::ConsumingIter<Value>,
+    iter: imbl::vector::ConsumingIter<Value, DefaultSharedPtr>,
 }
 
 impl SeqDeserializer {
@@ -998,7 +999,7 @@ impl<'de> VariantAccess<'de> for VariantRefDeserializer<'de> {
 }
 
 struct SeqRefDeserializer<'de> {
-    iter: imbl::vector::Iter<'de, Value>,
+    iter: imbl::vector::Iter<'de, Value, DefaultSharedPtr>,
 }
 
 impl<'de> SeqRefDeserializer<'de> {
@@ -1208,7 +1209,7 @@ impl Value {
     }
 
     #[cold]
-    fn unexpected(&self) -> Unexpected {
+    fn unexpected(&self) -> Unexpected<'_> {
         match self {
             Value::Null => Unexpected::Unit,
             Value::Bool(b) => Unexpected::Bool(*b),

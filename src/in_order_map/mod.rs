@@ -6,7 +6,7 @@ use std::{
 };
 
 pub mod my_visitor;
-use imbl::Vector;
+use imbl::{shared_ptr::DefaultSharedPtr, Vector};
 use serde::{ser::SerializeMap, Deserialize, Deserializer, Serialize, Serializer};
 
 #[macro_export]
@@ -147,7 +147,7 @@ where
 {
     #[inline]
     #[must_use]
-    pub fn iter(&self) -> imbl::vector::Iter<(K, V)> {
+    pub fn iter(&self) -> imbl::vector::Iter<'_, (K, V), DefaultSharedPtr> {
         self.value.iter()
     }
     #[inline]
@@ -255,7 +255,7 @@ where
     /// the same map.
     #[inline]
     #[must_use]
-    pub fn iter_mut(&mut self) -> imbl::vector::IterMut<'_, (K, V)> {
+    pub fn iter_mut(&mut self) -> imbl::vector::IterMut<'_, (K, V), DefaultSharedPtr> {
         self.value.iter_mut()
     }
 
@@ -1330,7 +1330,7 @@ where
     K: Clone,
     V: Clone,
 {
-    it: imbl::vector::Iter<'a, (K, V)>,
+    it: imbl::vector::Iter<'a, (K, V), DefaultSharedPtr>,
 }
 
 // We impl Clone instead of deriving it, because we want Clone even if K and V aren't.
@@ -1390,7 +1390,7 @@ where
     V: Clone,
 {
     type Item = (K, V);
-    type IntoIter = imbl::vector::ConsumingIter<(K, V)>;
+    type IntoIter = imbl::vector::ConsumingIter<(K, V), DefaultSharedPtr>;
 
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
