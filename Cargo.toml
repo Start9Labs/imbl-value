@@ -1,6 +1,6 @@
 [package]
 name = "imbl-value"
-version = "0.4.0"
+version = "0.4.1"
 edition = "2021"
 description = "A JSON `Value` type built on `imbl`"
 license = "MIT"
@@ -9,11 +9,13 @@ license = "MIT"
 [features]
 default = []
 arbitrary = ["proptest", "proptest-derive", "imbl/proptest"]
+ts-rs = ["dep:ts-rs", "yasi/ts-rs"]
 
 [dependencies]
 imbl = { version = "6", features = ["serde", "small-chunks"] }
 serde_json = "1"
 serde = { version = "1", features = ["derive", "rc"] }
-yasi = "0.1"
+yasi = { version = "0.1.6", features = ["serde"] }
 proptest = { version = "1", optional = true }
 proptest-derive = { version = "0.6", optional = true }
+ts-rs = { version = "11", optional = true }

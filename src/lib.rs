@@ -18,6 +18,9 @@ pub mod ser;
 #[cfg(feature = "arbitrary")]
 mod arbitrary;
 
+#[cfg(feature = "ts-rs")]
+mod ts_rs;
+
 pub use imbl;
 pub use in_order_map::InOMap;
 pub use serde_json::Error as ErrorSource;
