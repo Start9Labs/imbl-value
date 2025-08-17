@@ -3,7 +3,6 @@ use ts_rs::{TypeVisitor, TS};
 
 impl TS for Value {
     type WithoutGenerics = Self;
-    type OptionInnerType = Self;
     fn name() -> String {
         "unknown".to_string()
     }
@@ -23,7 +22,6 @@ impl TS for Value {
 
 impl<K: TS + Eq + Clone, V: TS + Clone> TS for InOMap<K, V> {
     type WithoutGenerics = InOMap<(), ()>;
-    type OptionInnerType = Self;
 
     fn ident() -> String {
         panic!()
